@@ -1,0 +1,25 @@
+:root {
+  --color-primary: #4CAF50;
+  --color-secondary: #FF9800;
+  --color-text: #333;
+  --color-bg: #FAFAFA;
+  --color-border: #DDD;
+
+  --font-primary: 'Inter', sans-serif;
+  --font-secondary: 'Roboto', sans-serif;
+
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.25rem;
+  --font-size-xl: 1.5rem;
+
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+
+  --border-radius: 4px;
+  --transition: 0.3s ease-in-out;
+}
