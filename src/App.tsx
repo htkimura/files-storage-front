@@ -1,6 +1,6 @@
 import { Route, Routes } from 'react-router-dom'
 import { NotFound } from './pages/NotFound'
-import { HOME_PAGE_ROUTE } from './routes'
+import { HOME_PAGE_ROUTE, LOGIN_PAGE_ROUTE } from './routes'
 import { Login } from './pages/Login'
 import './css/base.css'
 import './css/typography.css'
@@ -11,6 +11,7 @@ function App() {
   return (
     <Routes>
       <Route path={HOME_PAGE_ROUTE} element={<Home />} />
+      <Route path={LOGIN_PAGE_ROUTE} element={<Login />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   )
