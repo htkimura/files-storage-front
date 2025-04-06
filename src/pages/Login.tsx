@@ -1,7 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { Form, FormField } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { apiClient } from '@/config'
 import { useUser } from '@/contexts/user-context'
 import { useToast } from '@/hooks/use-toast'
 import { HOME_PAGE_ROUTE } from '@/routes'
@@ -10,13 +9,15 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import { z } from 'zod'
-
+import { useLogin } from '@htkimura/files-storage-backend.rest-client'
+import { queryDefaultOptions } from '@/config'
 const formSchema = z.object({
   email: z.string().email('Invalid e-mail'),
   password: z.string(),
 })
 
 export const Login = () => {
+  const { mutateAsync: login } = useLogin(queryDefaultOptions)
   const [isLoading, setIsLoading] = useState(false)
   const { setToken, setRefreshToken } = useUser()
   const form = useForm<z.infer<typeof formSchema>>({
@@ -30,8 +31,9 @@ export const Login = () => {
     setIsLoading(true)
 
     try {
-      const { data } = await apiClient.post('/users/login', values)
-      const { token, refreshToken } = data
+      const {
+        data: { token, refreshToken },
+      } = await login({ data: values })
 
       setToken(token)
       setRefreshToken(refreshToken)
