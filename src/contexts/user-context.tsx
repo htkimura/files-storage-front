@@ -11,6 +11,7 @@ interface UserContextType {
   setToken: Dispatch<SetStateAction<UserContextType['token']>>
   refreshToken: string | null
   setRefreshToken: Dispatch<SetStateAction<UserContextType['refreshToken']>>
+  logout: () => void
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined)
@@ -22,6 +23,11 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     null,
   )
 
+  const logout = () => {
+    setToken(null)
+    setRefreshToken(null)
+  }
+
   return (
     <UserContext.Provider
       value={{
@@ -29,6 +35,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         setToken,
         refreshToken,
         setRefreshToken,
+        logout,
       }}
     >
       {children}
