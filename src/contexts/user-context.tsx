@@ -1,4 +1,5 @@
 import { useStoredState } from '@/hooks/use-stored-state'
+import { User } from '@htkimura/files-storage-backend.rest-client'
 import React, {
   createContext,
   Dispatch,
@@ -7,6 +8,8 @@ import React, {
 } from 'react'
 
 interface UserContextType {
+  user: User | null
+  setUser: Dispatch<SetStateAction<UserContextType['user']>>
   token: string | null
   setToken: Dispatch<SetStateAction<UserContextType['token']>>
   refreshToken: string | null
@@ -17,6 +20,7 @@ interface UserContextType {
 const UserContext = createContext<UserContextType | undefined>(undefined)
 
 export const UserProvider = ({ children }: { children: React.ReactNode }) => {
+  const [user, setUser] = useStoredState<User | null>('user', null)
   const [token, setToken] = useStoredState<string | null>('token', null)
   const [refreshToken, setRefreshToken] = useStoredState<string | null>(
     'refresh_token',
@@ -31,6 +35,8 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   return (
     <UserContext.Provider
       value={{
+        user,
+        setUser,
         token,
         setToken,
         refreshToken,

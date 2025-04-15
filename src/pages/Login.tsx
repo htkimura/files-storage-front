@@ -19,7 +19,7 @@ const formSchema = z.object({
 export const Login = () => {
   const { mutateAsync: login } = useLogin(queryDefaultOptions)
   const [isLoading, setIsLoading] = useState(false)
-  const { setToken, setRefreshToken } = useUser()
+  const { setToken, setRefreshToken, setUser } = useUser()
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
   })
@@ -32,10 +32,12 @@ export const Login = () => {
 
     try {
       const {
-        data: { token, refreshToken },
+        data: { token, refreshToken, user },
       } = await login({ data: values })
 
+      setUser(user)
       setToken(token)
+      setRefreshToken(refreshToken)
       setRefreshToken(refreshToken)
 
       navigate(HOME_PAGE_ROUTE)
