@@ -6,10 +6,10 @@ import { Sidebar } from './sidebar'
 export const Layout: FC<PropsWithChildren> = ({ children }) => {
   return (
     <>
-      <Header />
       <SidebarProvider>
         <Sidebar>
-          <div className="flex flex-col h-screen">
+          <div className="flex flex-col h-screen w-full">
+            <Header />
             <main>{children}</main>
           </div>
         </Sidebar>

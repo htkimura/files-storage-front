@@ -7,15 +7,14 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
-  SidebarTrigger,
   Sidebar as SidebarUI,
 } from '../ui/sidebar'
 import { HOME_PAGE_ROUTE } from '@/routes'
 import { File, LucideIcon, LogOut } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
 import { useUser } from '@/contexts'
-import { FC, PropsWithChildren, useEffect, useState } from 'react'
-import { cn } from '@/lib/utils'
+import { FC, PropsWithChildren } from 'react'
+import { Separator } from '../ui/separator'
 
 interface SidebarItem {
   label: string
@@ -60,30 +59,15 @@ const SidebarItem = ({ item }: { item: SidebarItem }) => {
 export const Sidebar: FC<PropsWithChildren> = ({ children }) => {
   const { logout } = useUser()
 
-  const [scrolled, setScrolled] = useState(false)
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 40)
-    }
-
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
-
   return (
     <SidebarProvider>
-      <SidebarUI
-        collapsible="icon"
-        variant="floating"
-        className={cn(
-          'transition-all duration-200 translate-x-2.5',
-          scrolled ? 'h-screen ' : 'h-[calc(100vh_-_4rem)] translate-y-16',
-        )}
-      >
+      <SidebarUI collapsible="icon">
         <SidebarHeader>
-          <SidebarTrigger />
+          <div className="p-1">
+            <img src="/logo-text.png" alt="logo" width={70} />
+          </div>
         </SidebarHeader>
+        <Separator />
         <SidebarContent>
           <SidebarMenu>
             {items.map((item) => (
