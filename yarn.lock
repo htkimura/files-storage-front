@@ -381,10 +381,10 @@
   resolved "https://registry.yarnpkg.com/@hookform/resolvers/-/resolvers-3.9.1.tgz#a23883c40bfd449cb6c6ab5a0fa0729184c950ff"
   integrity sha512-ud2HqmGBM0P0IABqoskKWI6PEf6ZDDBZkFqe2Vnl+mTHCEHzr3ISjjZyCwTjC/qpL25JC9aIDkloQejvMeq0ug==
 
-"@htkimura/files-storage-backend.rest-client@^0.0.21":
-  version "0.0.21"
-  resolved "https://registry.yarnpkg.com/@htkimura/files-storage-backend.rest-client/-/files-storage-backend.rest-client-0.0.21.tgz#061ba1156f19f7b8207093f133d1e431d6e6bc07"
-  integrity sha512-6UyYG/nyO60/LSvZHeHGrC43P6/JdmhflzPVFAxBp/wUGpRGgGCrcaiPHljdb8BPPubuKFvtt6uqBYKPtQkX6w==
+"@htkimura/files-storage-backend.rest-client@^0.0.23":
+  version "0.0.23"
+  resolved "https://registry.yarnpkg.com/@htkimura/files-storage-backend.rest-client/-/files-storage-backend.rest-client-0.0.23.tgz#003f2a4b094cb0250226eb986c251082001b5877"
+  integrity sha512-i/N3su301jiEYXZkDJ7pjhVViWOyb1ny5sO0WSlWEcphu80PZU6Lh7AHyJ8qaz6JazKRnrw2pX2Gurat7JzO8g==
   dependencies:
     axios "^1.7.9"
 
@@ -2467,6 +2467,11 @@ file-selector@^2.1.0:
   integrity sha512-QgXo+mXTe8ljeqUFaX3QVHc5osSItJ/Km+xpocx0aSqWGMSCf6qYs/VnzZgS864Pjn5iceMRFigeAV7AfTlaig==
   dependencies:
     tslib "^2.7.0"
+
+filesize@^10.1.6:
+  version "10.1.6"
+  resolved "https://registry.yarnpkg.com/filesize/-/filesize-10.1.6.tgz#31194da825ac58689c0bce3948f33ce83aabd361"
+  integrity sha512-sJslQKU2uM33qH5nqewAwVB2QgR6w1aMNsYUp3aN5rMRyXEwJGmZvaWzeJFNTOXWlHQyBFCWrdj3fV/fsTOX8w==
 
 fill-range@^7.1.1:
   version "7.1.1"
