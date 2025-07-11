@@ -3,6 +3,7 @@ import { config, queryDefaultOptions } from '@/config'
 import { useUser } from '@/contexts'
 import {
   File,
+  useDeleteFileById,
   useGetFileById,
   useMyFiles,
 } from '@htkimura/files-storage-backend.rest-client'
@@ -144,8 +145,26 @@ export const Home = () => {
     }
   }, [fileData])
 
+  const { mutate: deleteFile } = useDeleteFileById({
+    mutation: {
+      onSuccess: () => {
+        refetch()
+      },
+    },
+    axios: {
+      ...queryDefaultOptions.axios,
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  })
+
   const handleDownload = (fileId: string) => {
     setSelectedFile(fileId)
+  }
+
+  const handleDelete = (fileId: string) => {
+    deleteFile({ id: fileId })
   }
 
   const totalPages = filesData ? Math.max(filesData.total / size, 1) : 1
@@ -222,10 +241,13 @@ export const Home = () => {
               <DownloadIcon />
               Download
             </DropdownMenuItem>
-            {/* <DropdownMenuItem onClick={() => handleDownload(row.original.id)}>
-              <TrashIcon />
+            <DropdownMenuItem
+              className="cursor-pointer text-red-500"
+              onClick={() => handleDelete(row.original.id)}
+            >
+              <TrashIcon className="text-red-500" />
               Delete
-            </DropdownMenuItem> */}
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       ),
