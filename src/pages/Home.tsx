@@ -66,14 +66,21 @@ export const Home = () => {
   })
 
   // TODO: add pagination
-  const { data, refetch } = useMyFiles({
-    axios: {
-      ...queryDefaultOptions.axios,
-      headers: {
-        Authorization: `Bearer ${token}`,
+  const { data: filesDataRaw, refetch } = useMyFiles(
+    { page: 1, size: 20 },
+    {
+      axios: {
+        ...queryDefaultOptions.axios,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       },
     },
-  })
+  )
+
+  const { data: filesData } = filesDataRaw || {}
+
+  const files = filesData?.data || []
 
   const [selectedFile, setSelectedFile] = useState<string | null>(null)
 
@@ -128,7 +135,7 @@ export const Home = () => {
 
         <Table>
           <TableCaption>
-            No {data?.data.length === 0 ? '' : 'more'} files to load.
+            No {filesData?.data.length === 0 ? '' : 'more'} files to load.
           </TableCaption>
           <TableHeader>
             <TableRow>
@@ -140,7 +147,7 @@ export const Home = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {(data?.data || []).map((file) => (
+            {files.map((file) => (
               <TableRow key={file.id}>
                 <TableCell className="font-medium">{file.name}</TableCell>
                 <TableCell>{file.type}</TableCell>
