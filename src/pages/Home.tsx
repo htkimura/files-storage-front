@@ -2,6 +2,7 @@ import { Layout } from '@/components/layout/layout'
 import { config, queryDefaultOptions } from '@/config'
 import { useUser } from '@/contexts'
 import {
+  File,
   useGetFileById,
   useMyFiles,
 } from '@htkimura/files-storage-backend.rest-client'
@@ -16,9 +17,7 @@ import { useDropzone } from 'react-dropzone'
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
-  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -28,9 +27,17 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useEffect, useState } from 'react'
+
+import {
+  ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+} from '@tanstack/react-table'
 
 import {
   Pagination,
@@ -40,7 +47,8 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination'
-import classNames from 'classnames'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Skeleton } from '@/components/ui/skeleton'
 
 export const Home = () => {
   const { token } = useUser()
@@ -82,7 +90,11 @@ export const Home = () => {
   const [page, setPage] = useState(1)
   const size = 20
 
-  const { data: filesDataRaw, refetch } = useMyFiles(
+  const {
+    data: filesDataRaw,
+    refetch,
+    isLoading: isLoadingFiles,
+  } = useMyFiles(
     { page, size },
     {
       axios: {
@@ -143,11 +155,96 @@ export const Home = () => {
       setPage(page - 1)
     }
   }
+
   const handleNextPage = () => {
     if (page < totalPages) {
       setPage(page + 1)
     }
   }
+
+  const columns: ColumnDef<File>[] = [
+    {
+      id: 'select',
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && 'indeterminate')
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      ),
+    },
+    {
+      accessorKey: 'name',
+      header: 'Name',
+      cell: ({ row }) => <div>{row.getValue('name')}</div>,
+    },
+    {
+      accessorKey: 'type',
+      header: 'Type',
+      cell: ({ row }) => <div>{row.getValue('type')}</div>,
+    },
+    {
+      accessorKey: 'size',
+      header: 'Size',
+      cell: ({ row }) => <div>{filesize(row.getValue('size'))}</div>,
+    },
+    {
+      accessorKey: 'createdAt',
+      header: 'Uploaded at',
+      cell: ({ row }) => (
+        <div>{new Date(row.getValue('createdAt')).toLocaleString()}</div>
+      ),
+    },
+    {
+      id: 'actions',
+      cell: ({ row }) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger>
+            <EllipsisVerticalIcon />
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent className="w-56" align="start">
+            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onClick={() => handleDownload(row.original.id)}
+            >
+              <DownloadIcon />
+              Download
+            </DropdownMenuItem>
+            {/* <DropdownMenuItem onClick={() => handleDownload(row.original.id)}>
+              <TrashIcon />
+              Delete
+            </DropdownMenuItem> */}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+    },
+  ]
+
+  const table = useReactTable({
+    data: files,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    manualPagination: true,
+    pageCount: totalPages,
+    state: {
+      pagination: {
+        pageIndex: page - 1,
+        pageSize: size,
+      },
+    },
+  })
 
   return (
     <Layout>
@@ -161,90 +258,117 @@ export const Home = () => {
       </button>
       <div className="mt-10 p-10">
         <h1>All files</h1>
-
-        <Table>
-          <TableCaption>
-            No {filesData?.data.length === 0 ? '' : 'more'} files to load.
-          </TableCaption>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[100px]">Name</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Size</TableHead>
-              <TableHead>Uploaded at</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {files.map((file) => (
-              <TableRow key={file.id}>
-                <TableCell className="font-medium">{file.name}</TableCell>
-                <TableCell>{file.type}</TableCell>
-                <TableCell>{filesize(file.size)}</TableCell>
-                <TableCell>
-                  {new Date(file.createdAt).toLocaleString()}
-                </TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger>
-                      <EllipsisVerticalIcon />
-                    </DropdownMenuTrigger>
-
-                    <DropdownMenuContent className="w-56" align="start">
-                      <DropdownMenuItem onClick={() => handleDownload(file.id)}>
-                        <DownloadIcon />
-                        Download
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleDownload(file.id)}>
-                        <TrashIcon />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-          <TableFooter>
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem
-                  className={classNames({
-                    'cursor-pointer': page > 1,
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => {
+                    return (
+                      <TableHead key={header.id}>
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext(),
+                            )}
+                      </TableHead>
+                    )
                   })}
-                >
-                  <PaginationPrevious onClick={handlePreviousPage} />
-                </PaginationItem>
-                {Array.from({
-                  length: totalPages,
-                }).map((_, index) => {
-                  const currentPage = index + 1
-                  const isActive = page === currentPage
-                  return (
-                    <PaginationItem key={index}>
-                      <PaginationLink
-                        className={classNames({
-                          'cursor-pointer': !isActive,
-                        })}
-                        isActive={isActive}
-                        onClick={() => setPage(currentPage)}
-                      >
-                        {currentPage}
-                      </PaginationLink>
-                    </PaginationItem>
-                  )
-                })}
-                <PaginationItem
-                  className={classNames({
-                    'cursor-pointer': page !== totalPages,
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && 'selected'}
+                    className="w-fit"
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : isLoadingFiles ? (
+                <TableRow>
+                  <TableCell>
+                    <Skeleton className="h-4 w-full" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-full" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-full" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-full" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-full" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-full" />
+                  </TableCell>
+                </TableRow>
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center"
+                  >
+                    No results.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+          {!isLoadingFiles && files.length > 0 && (
+            <div className="py-2">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem
+                    className={page > 1 ? 'cursor-pointer' : 'cursor-default'}
+                  >
+                    <PaginationPrevious onClick={handlePreviousPage} />
+                  </PaginationItem>
+                  {Array.from({
+                    length: totalPages,
+                  }).map((_, index) => {
+                    const currentPage = index + 1
+                    const isActive = page === currentPage
+                    return (
+                      <PaginationItem key={index}>
+                        <PaginationLink
+                          className={
+                            !isActive ? 'cursor-pointer' : 'cursor-default'
+                          }
+                          isActive={isActive}
+                          onClick={() => setPage(currentPage)}
+                        >
+                          {currentPage}
+                        </PaginationLink>
+                      </PaginationItem>
+                    )
                   })}
-                >
-                  <PaginationNext onClick={handleNextPage} />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </TableFooter>
-        </Table>
+                  <PaginationItem
+                    className={
+                      page < totalPages ? 'cursor-pointer' : 'cursor-default'
+                    }
+                  >
+                    <PaginationNext onClick={handleNextPage} />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
+        </div>
       </div>
     </Layout>
   )
