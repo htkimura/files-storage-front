@@ -6,13 +6,19 @@ import {
   useMyFiles,
 } from '@htkimura/files-storage-backend.rest-client'
 import axios from 'axios'
-import { CloudUploadIcon, EllipsisVerticalIcon } from 'lucide-react'
+import {
+  CloudUploadIcon,
+  DownloadIcon,
+  EllipsisVerticalIcon,
+  TrashIcon,
+} from 'lucide-react'
 import { useDropzone } from 'react-dropzone'
 import {
   Table,
   TableBody,
   TableCaption,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -22,11 +28,19 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useEffect, useState } from 'react'
+
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination'
+import classNames from 'classnames'
 
 export const Home = () => {
   const { token } = useUser()
@@ -65,9 +79,11 @@ export const Home = () => {
     },
   })
 
-  // TODO: add pagination
+  const [page, setPage] = useState(1)
+  const size = 20
+
   const { data: filesDataRaw, refetch } = useMyFiles(
-    { page: 1, size: 20 },
+    { page, size },
     {
       axios: {
         ...queryDefaultOptions.axios,
@@ -120,6 +136,19 @@ export const Home = () => {
     setSelectedFile(fileId)
   }
 
+  const totalPages = filesData ? Math.max(filesData.total / size, 1) : 1
+
+  const handlePreviousPage = () => {
+    if (page > 1) {
+      setPage(page - 1)
+    }
+  }
+  const handleNextPage = () => {
+    if (page < totalPages) {
+      setPage(page + 1)
+    }
+  }
+
   return (
     <Layout>
       <button
@@ -162,11 +191,13 @@ export const Home = () => {
                     </DropdownMenuTrigger>
 
                     <DropdownMenuContent className="w-56" align="start">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-
                       <DropdownMenuItem onClick={() => handleDownload(file.id)}>
+                        <DownloadIcon />
                         Download
-                        <DropdownMenuShortcut>⇩</DropdownMenuShortcut>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleDownload(file.id)}>
+                        <TrashIcon />
+                        Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -174,7 +205,45 @@ export const Home = () => {
               </TableRow>
             ))}
           </TableBody>
-          {/* TODO: add TableFooter with pagination */}
+          <TableFooter>
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem
+                  className={classNames({
+                    'cursor-pointer': page > 1,
+                  })}
+                >
+                  <PaginationPrevious onClick={handlePreviousPage} />
+                </PaginationItem>
+                {Array.from({
+                  length: totalPages,
+                }).map((_, index) => {
+                  const currentPage = index + 1
+                  const isActive = page === currentPage
+                  return (
+                    <PaginationItem key={index}>
+                      <PaginationLink
+                        className={classNames({
+                          'cursor-pointer': !isActive,
+                        })}
+                        isActive={isActive}
+                        onClick={() => setPage(currentPage)}
+                      >
+                        {currentPage}
+                      </PaginationLink>
+                    </PaginationItem>
+                  )
+                })}
+                <PaginationItem
+                  className={classNames({
+                    'cursor-pointer': page !== totalPages,
+                  })}
+                >
+                  <PaginationNext onClick={handleNextPage} />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </TableFooter>
         </Table>
       </div>
     </Layout>
