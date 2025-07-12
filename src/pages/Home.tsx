@@ -50,9 +50,29 @@ import {
 } from '@/components/ui/pagination'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Skeleton } from '@/components/ui/skeleton'
+import classNames from 'classnames'
+import { useLottie } from 'lottie-react'
+import cloudUploadingAnimation from '@/animations/cloud-uploading.json'
+
+const UploadingAnimation = () => {
+  const { View } = useLottie({
+    animationData: cloudUploadingAnimation,
+    loop: true,
+    autoplay: true,
+    style: {
+      height: 150,
+      padding: 0,
+      margin: 0,
+    },
+  })
+
+  return <>{View}</>
+}
 
 export const Home = () => {
   const { token } = useUser()
+
+  const [isUploading, setIsUploading] = useState(false)
 
   const clientAxiosConfig = {
     ...queryDefaultOptions.axios,
@@ -61,10 +81,11 @@ export const Home = () => {
     },
   }
 
-  const { getRootProps, getInputProps } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
     noKeyboard: true,
     onDrop: async (acceptedFiles) => {
       acceptedFiles.forEach(async (file) => {
+        setIsUploading(true)
         try {
           const { data } = await axios.get(
             config.apiBaseUrl + '/uploads/presigned-url',
@@ -91,6 +112,8 @@ export const Home = () => {
           await refetch()
         } catch (error) {
           console.error('[error]', error)
+        } finally {
+          setIsUploading(false)
         }
       })
     },
@@ -164,12 +187,29 @@ export const Home = () => {
   return (
     <Layout>
       <button
-        className="border-2 border-dashed max-w-xl  p-10 flex items-center justify-center flex-col m-auto mt-10 hover:border-orange-500 hover:bg-orange-50 transition-all duration-75"
+        className={classNames(
+          'border-2 border-dashed max-w-xl  flex items-center justify-center flex-col m-auto mt-10 hover:border-orange-500 hover:bg-orange-50 transition-all duration-75 w-full h-44',
+          {
+            'border-orange-500 bg-orange-50': isDragActive || isUploading,
+            'p-10': !isUploading,
+          },
+        )}
         {...getRootProps()}
       >
-        <input {...getInputProps()} />
-        <CloudUploadIcon />
-        <span>Drag & Drop files or click to choose files</span>
+        {isUploading ? (
+          <UploadingAnimation />
+        ) : (
+          <>
+            <input {...getInputProps()} />
+            <CloudUploadIcon />
+
+            <span>
+              {isDragActive
+                ? 'Nice! Drop your file to start uploading it'
+                : 'Drag & Drop files or click to choose files'}
+            </span>
+          </>
+        )}
       </button>
       <div className="mt-10 p-10">
         <h1>All files</h1>
