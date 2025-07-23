@@ -12,6 +12,7 @@ import {
   CloudUploadIcon,
   DownloadIcon,
   EllipsisVerticalIcon,
+  Loader2,
   TrashIcon,
 } from 'lucide-react'
 import { useDropzone } from 'react-dropzone'
@@ -32,14 +33,22 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { FC, useEffect, useState } from 'react'
-
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
 import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
 } from '@tanstack/react-table'
-
 import {
   Pagination,
   PaginationContent,
@@ -53,6 +62,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import classNames from 'classnames'
 import { useLottie } from 'lottie-react'
 import cloudUploadingAnimation from '@/animations/cloud-uploading.json'
+import { Button } from '@/components/ui/button'
+import toast from 'react-hot-toast'
 
 const UploadingAnimation = () => {
   const { View } = useLottie({
@@ -137,22 +148,22 @@ export const Home = () => {
 
   const files = filesData?.data || []
 
-  const [selectedFile, setSelectedFile] = useState<string | null>(null)
+  const [selectedFileId, setSelectedFileId] = useState<string | null>(null)
 
-  const { data: fileData } = useGetFileById(selectedFile!, {
+  const { data: fileData } = useGetFileById(selectedFileId!, {
     query: {
-      enabled: !!selectedFile,
-      queryKey: ['file', selectedFile],
+      enabled: !!selectedFileId,
+      queryKey: ['file', selectedFileId],
     },
     axios: clientAxiosConfig,
   })
 
   const handleDownload = (fileId: string) => {
-    setSelectedFile(fileId)
+    setSelectedFileId(fileId)
   }
 
   useEffect(() => {
-    setSelectedFile(null)
+    setSelectedFileId(null)
     if (fileData) {
       ;(async () => {
         const response = await fetch(fileData.data.presignedUrl)
@@ -258,36 +269,67 @@ const FilesTable: FC<FilesTableProps> = ({
   size,
   setPage,
 }) => {
-  const { mutate: deleteFile } = useDeleteFileById({
+  const [selectedFiles, setSelectedFiles] = useState<string[]>([]) // array of selected files ids
+  const [rowSelection, setRowSelection] = useState({}) // state object for table control
+  const [fileToDelete, setFileToDelete] = useState<File | null>(null)
+
+  const [open, setOpen] = useState(false)
+
+  const { mutate: deleteFile, isPending: isDeletingFile } = useDeleteFileById({
     mutation: {
       onSuccess: () => {
         refetch()
+        setOpen(false)
+        toast.success('File deleted successfully')
+      },
+      onError: (error: any) => {
+        toast.error(
+          error.response?.data?.message ||
+            'Error unexpected during deleting file',
+        )
       },
     },
     axios: clientAxiosConfig,
   })
 
-  const handleDelete = (fileId: string) => {
-    deleteFile({ id: fileId })
-  }
+  const rowSelectionKeys = Object.keys(rowSelection)
+
+  const headerCheckboxChecked =
+    rowSelectionKeys.length === files.length ||
+    (rowSelectionKeys.length > 0 && 'indeterminate')
 
   const columns: ColumnDef<File>[] = [
     {
       id: 'select',
       header: ({ table }) => (
         <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && 'indeterminate')
-          }
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          checked={headerCheckboxChecked}
+          onCheckedChange={(value) => {
+            table.toggleAllPageRowsSelected(!!value)
+            if (value) {
+              setSelectedFiles(
+                table.getRowModel().rows.map((row) => row.original.id),
+              )
+            } else {
+              setSelectedFiles([])
+            }
+          }}
           aria-label="Select all"
         />
       ),
       cell: ({ row }) => (
         <Checkbox
           checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          onCheckedChange={(value) => {
+            row.toggleSelected(!!value)
+            if (value) {
+              setSelectedFiles((prev) => [...prev, row.original.id])
+            } else {
+              setSelectedFiles((prev) =>
+                prev.filter((fileId) => fileId !== row.original.id),
+              )
+            }
+          }}
           aria-label="Select row"
         />
       ),
@@ -331,13 +373,16 @@ const FilesTable: FC<FilesTableProps> = ({
               <DownloadIcon />
               Download
             </DropdownMenuItem>
-            <DropdownMenuItem
-              className="cursor-pointer text-red-500"
-              onClick={() => handleDelete(row.original.id)}
+
+            <DialogTrigger
+              asChild
+              onClick={() => setFileToDelete(row.original)}
             >
-              <TrashIcon className="text-red-500" />
-              Delete
-            </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer text-red-500">
+                <TrashIcon className="text-red-500" />
+                Delete
+              </DropdownMenuItem>
+            </DialogTrigger>
           </DropdownMenuContent>
         </DropdownMenu>
       ),
@@ -355,114 +400,207 @@ const FilesTable: FC<FilesTableProps> = ({
         pageIndex: page - 1,
         pageSize: size,
       },
+      rowSelection,
     },
+    onRowSelectionChange: setRowSelection,
   })
 
+  const handleUnselectAll = () => {
+    setRowSelection({})
+    setSelectedFiles([])
+  }
+
+  const handleSelectAll = () => {
+    setRowSelection(
+      files.reduce(
+        (acc, _, index) => {
+          acc[index] = true
+          return acc
+        },
+        {} as Record<string, boolean>,
+      ),
+    )
+    setSelectedFiles(files.map((file) => file.id))
+  }
+
+  const handleDelete = async () => deleteFile({ id: fileToDelete?.id || '' })
+
   return (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id}>
-              {headerGroup.headers.map((header) => {
-                return (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
-                  </TableHead>
-                )
-              })}
-            </TableRow>
-          ))}
-        </TableHeader>
-        <TableBody>
-          {table.getRowModel().rows?.length ? (
-            table.getRowModel().rows.map((row) => (
-              <TableRow
-                key={row.id}
-                data-state={row.getIsSelected() && 'selected'}
-                className="w-fit"
-              >
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
+    <Dialog open={open} onOpenChange={setOpen}>
+      <div className="rounded-md border">
+        {selectedFiles.length > 0 && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-10 bg-white px-4 py-3 rounded-lg shadow-lg border-2 z-10 gap-2 flex  items-center">
+            <Checkbox
+              id="bulk-actions-checkbox"
+              checked={headerCheckboxChecked}
+              onCheckedChange={
+                headerCheckboxChecked === 'indeterminate'
+                  ? handleSelectAll
+                  : handleUnselectAll
+              }
+            />
+            <label htmlFor="bulk-actions-checkbox" className="cursor-pointer">
+              Selected ({selectedFiles.length})
+            </label>
+            |
+            <button className="text-red-500 flex items-center gap-1">
+              <TrashIcon width={18} />
+              Delete
+            </button>
+          </div>
+        )}
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => {
+                  return (
+                    <TableHead key={header.id}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
+                    </TableHead>
+                  )
+                })}
               </TableRow>
-            ))
-          ) : isLoading ? (
-            <TableRow>
-              <TableCell>
-                <Skeleton className="h-4 w-full" />
-              </TableCell>
-              <TableCell>
-                <Skeleton className="h-4 w-full" />
-              </TableCell>
-              <TableCell>
-                <Skeleton className="h-4 w-full" />
-              </TableCell>
-              <TableCell>
-                <Skeleton className="h-4 w-full" />
-              </TableCell>
-              <TableCell>
-                <Skeleton className="h-4 w-full" />
-              </TableCell>
-              <TableCell>
-                <Skeleton className="h-4 w-full" />
-              </TableCell>
-            </TableRow>
-          ) : (
-            <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center">
-                No results.
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-      {!isLoading && files.length > 0 && (
-        <div className="py-2">
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem
-                className={page > 1 ? 'cursor-pointer' : 'cursor-default'}
-              >
-                <PaginationPrevious onClick={handlePreviousPage} />
-              </PaginationItem>
-              {Array.from({
-                length: totalPages,
-              }).map((_, index) => {
-                const currentPage = index + 1
-                const isActive = page === currentPage
-                return (
-                  <PaginationItem key={index}>
-                    <PaginationLink
-                      className={
-                        !isActive ? 'cursor-pointer' : 'cursor-default'
-                      }
-                      isActive={isActive}
-                      onClick={() => setPage(currentPage)}
-                    >
-                      {currentPage}
-                    </PaginationLink>
-                  </PaginationItem>
-                )
-              })}
-              <PaginationItem
-                className={
-                  page < totalPages ? 'cursor-pointer' : 'cursor-default'
-                }
-              >
-                <PaginationNext onClick={handleNextPage} />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        </div>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && 'selected'}
+                  className="w-fit"
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : isLoading ? (
+              <TableRow>
+                <TableCell>
+                  <Skeleton className="h-4 w-full" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-full" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-full" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-full" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-full" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-full" />
+                </TableCell>
+              </TableRow>
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
+                  No results.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+        {!isLoading && files.length > 0 && (
+          <div className="py-2">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem
+                  className={page > 1 ? 'cursor-pointer' : 'cursor-default'}
+                >
+                  <PaginationPrevious onClick={handlePreviousPage} />
+                </PaginationItem>
+                {Array.from({
+                  length: totalPages,
+                }).map((_, index) => {
+                  const currentPage = index + 1
+                  const isActive = page === currentPage
+                  return (
+                    <PaginationItem key={index}>
+                      <PaginationLink
+                        className={
+                          !isActive ? 'cursor-pointer' : 'cursor-default'
+                        }
+                        isActive={isActive}
+                        onClick={() => setPage(currentPage)}
+                      >
+                        {currentPage}
+                      </PaginationLink>
+                    </PaginationItem>
+                  )
+                })}
+                <PaginationItem
+                  className={
+                    page < totalPages ? 'cursor-pointer' : 'cursor-default'
+                  }
+                >
+                  <PaginationNext onClick={handleNextPage} />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
+      </div>
+
+      {fileToDelete && (
+        <DeleteDialog
+          file={fileToDelete}
+          onDelete={handleDelete}
+          isLoading={isDeletingFile}
+        />
       )}
-    </div>
+    </Dialog>
+  )
+}
+
+interface DeleteDialogProps {
+  file: File
+  onDelete: () => void
+  isLoading: boolean
+}
+
+const DeleteDialog: FC<DeleteDialogProps> = ({ file, onDelete, isLoading }) => {
+  return (
+    <DialogContent className="sm:max-w-[425px]">
+      <DialogHeader>
+        <DialogTitle>Delete file</DialogTitle>
+        <DialogDescription>
+          Are you sure you want to delete <b>{file.name}</b>?
+        </DialogDescription>
+      </DialogHeader>
+
+      <DialogFooter>
+        <DialogClose asChild disabled={isLoading}>
+          <Button variant="outline">Cancel</Button>
+        </DialogClose>
+        <Button
+          type="submit"
+          className="bg-red-500 hover:bg-red-700"
+          onClick={onDelete}
+          disabled={isLoading}
+        >
+          {isLoading ? <Loader2 className="animate-spin" /> : <TrashIcon />}
+          Delete{isLoading && 'ing'}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
   )
 }
