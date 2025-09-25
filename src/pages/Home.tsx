@@ -3,6 +3,7 @@ import { config, queryDefaultOptions } from '@/config'
 import { useUser } from '@/contexts'
 import {
   File,
+  useDeleteBulkFilesByIds,
   useDeleteFileById,
   useGetFileById,
   useMyFiles,
@@ -287,6 +288,15 @@ const FilesTable: FC<FilesTableProps> = ({
           error.response?.data?.message ||
             'Error unexpected during deleting file',
         )
+      },
+    },
+    axios: clientAxiosConfig,
+  })
+
+  const { mutate: deleteBulkFiles } = useDeleteBulkFilesByIds({
+    mutation: {
+      onSuccess: () => {
+        refetch()
       },
     },
     axios: clientAxiosConfig,
