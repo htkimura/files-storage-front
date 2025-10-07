@@ -3914,6 +3914,11 @@ pirates@^4.0.1:
   resolved "https://registry.yarnpkg.com/pirates/-/pirates-4.0.6.tgz#3018ae32ecfcff6c29ba2267cbf21166ac1f36b9"
   integrity sha512-saLsH7WeYYPiD25LDuLRRY/i+6HaPYr6G1OUlN39otzkSTxKnubR9RTxS3/Kk50s1g2JTgFwWQDQyplC5/SHZg==
 
+pluralize-esm@^9.0.5:
+  version "9.0.5"
+  resolved "https://registry.yarnpkg.com/pluralize-esm/-/pluralize-esm-9.0.5.tgz#002d75789f5d1ea695adebac56f5b94cd4f1aeab"
+  integrity sha512-Kb2dcpMsIutFw2hYrN0EhsAXOUJTd6FVMIxvNAkZCMQLVt9NGZqQczvGpYDxNWCZeCWLHUPxQIBudWzt1h7VVA==
+
 pony-cause@^1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/pony-cause/-/pony-cause-1.1.1.tgz#f795524f83bebbf1878bd3587b45f69143cbf3f9"
