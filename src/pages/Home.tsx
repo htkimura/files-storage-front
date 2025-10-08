@@ -112,13 +112,22 @@ export const Home = () => {
             },
           )
 
-          const { presignedUploadUrl } = data
+          const {
+            presignedUploadUrl,
+            file: { id: fileId },
+          } = data
 
           await axios.put(presignedUploadUrl, file, {
             headers: {
               'Content-Type': file.type,
             },
           })
+
+          await axios.post(
+            config.apiBaseUrl + '/uploads/image-uploaded',
+            { fileId },
+            { headers: { Authorization: `Bearer ${token}` } },
+          )
 
           await refetch()
         } catch (error) {
