@@ -1,10 +1,10 @@
+import pluralize from 'pluralize-esm'
 import { Layout } from '@/components/layout/layout'
 import { config, queryDefaultOptions } from '@/config'
 import { useUser } from '@/contexts'
 import {
   File,
   useDeleteBulkFilesByIds,
-  useDeleteFileById,
   useGetFileById,
   useMyFiles,
 } from '@htkimura/files-storage-backend.rest-client'
@@ -42,7 +42,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog'
 import {
   ColumnDef,
@@ -270,37 +269,37 @@ const FilesTable: FC<FilesTableProps> = ({
   size,
   setPage,
 }) => {
-  const [selectedFiles, setSelectedFiles] = useState<string[]>([]) // array of selected files ids
+  const [fileToDelete, setFileToDelete] = useState<File | null>(null) // saves the file to be deleted when clicked in a table line dropdown
   const [rowSelection, setRowSelection] = useState({}) // state object for table control
-  const [fileToDelete, setFileToDelete] = useState<File | null>(null)
+  const selectedFiles = Object.keys(rowSelection).map(
+    (key) => files[Number(key)].id,
+  ) // array of selected files ids
 
-  const [open, setOpen] = useState(false)
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false)
 
-  const { mutate: deleteFile, isPending: isDeletingFile } = useDeleteFileById({
-    mutation: {
-      onSuccess: () => {
-        refetch()
-        setOpen(false)
-        toast.success('File deleted successfully')
-      },
-      onError: (error: any) => {
-        toast.error(
-          error.response?.data?.message ||
-            'Error unexpected during deleting file',
-        )
-      },
-    },
-    axios: clientAxiosConfig,
-  })
+  useEffect(() => {
+    if (!openDeleteDialog) setFileToDelete(null)
+  }, [openDeleteDialog])
 
-  const { mutate: deleteBulkFiles } = useDeleteBulkFilesByIds({
-    mutation: {
-      onSuccess: () => {
-        refetch()
+  const { mutate: deleteBulkFiles, isPending: isDeletingFiles } =
+    useDeleteBulkFilesByIds({
+      mutation: {
+        onSuccess: () => {
+          refetch()
+          setOpenDeleteDialog(false)
+          if (!fileToDelete) setRowSelection({})
+          toast.success(
+            `${pluralize('File', fileToDelete ? 1 : selectedFiles.length, true)} deleted successfully`,
+          )
+        },
+        onError: (error: any) => {
+          toast.error(
+            error.response?.data?.message || 'Error unexpected during deletion',
+          )
+        },
       },
-    },
-    axios: clientAxiosConfig,
-  })
+      axios: clientAxiosConfig,
+    })
 
   const rowSelectionKeys = Object.keys(rowSelection)
 
@@ -314,32 +313,14 @@ const FilesTable: FC<FilesTableProps> = ({
       header: ({ table }) => (
         <Checkbox
           checked={headerCheckboxChecked}
-          onCheckedChange={(value) => {
-            table.toggleAllPageRowsSelected(!!value)
-            if (value) {
-              setSelectedFiles(
-                table.getRowModel().rows.map((row) => row.original.id),
-              )
-            } else {
-              setSelectedFiles([])
-            }
-          }}
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
           aria-label="Select all"
         />
       ),
       cell: ({ row }) => (
         <Checkbox
           checked={row.getIsSelected()}
-          onCheckedChange={(value) => {
-            row.toggleSelected(!!value)
-            if (value) {
-              setSelectedFiles((prev) => [...prev, row.original.id])
-            } else {
-              setSelectedFiles((prev) =>
-                prev.filter((fileId) => fileId !== row.original.id),
-              )
-            }
-          }}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
           aria-label="Select row"
         />
       ),
@@ -384,15 +365,18 @@ const FilesTable: FC<FilesTableProps> = ({
               Download
             </DropdownMenuItem>
 
-            <DialogTrigger
-              asChild
-              onClick={() => setFileToDelete(row.original)}
+            <button
+              className="w-full"
+              onClick={() => {
+                setFileToDelete(row.original)
+                setOpenDeleteDialog(true)
+              }}
             >
               <DropdownMenuItem className="cursor-pointer text-red-500">
                 <TrashIcon className="text-red-500" />
                 Delete
               </DropdownMenuItem>
-            </DialogTrigger>
+            </button>
           </DropdownMenuContent>
         </DropdownMenu>
       ),
@@ -417,7 +401,6 @@ const FilesTable: FC<FilesTableProps> = ({
 
   const handleUnselectAll = () => {
     setRowSelection({})
-    setSelectedFiles([])
   }
 
   const handleSelectAll = () => {
@@ -430,13 +413,15 @@ const FilesTable: FC<FilesTableProps> = ({
         {} as Record<string, boolean>,
       ),
     )
-    setSelectedFiles(files.map((file) => file.id))
   }
 
-  const handleDelete = async () => deleteFile({ id: fileToDelete?.id || '' })
+  const handleDelete = async () =>
+    deleteBulkFiles({
+      params: { ids: fileToDelete ? [fileToDelete.id] : selectedFiles },
+    })
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <>
       <div className="rounded-md border">
         {selectedFiles.length > 0 && (
           <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-10 bg-white px-4 py-3 rounded-lg shadow-lg border-2 z-10 gap-2 flex  items-center">
@@ -453,7 +438,10 @@ const FilesTable: FC<FilesTableProps> = ({
               Selected ({selectedFiles.length})
             </label>
             |
-            <button className="text-red-500 flex items-center gap-1">
+            <button
+              className="text-red-500 flex items-center gap-1"
+              onClick={() => setOpenDeleteDialog(true)}
+            >
               <TrashIcon width={18} />
               Delete
             </button>
@@ -569,31 +557,42 @@ const FilesTable: FC<FilesTableProps> = ({
           </div>
         )}
       </div>
-
-      {fileToDelete && (
-        <DeleteDialog
-          file={fileToDelete}
-          onDelete={handleDelete}
-          isLoading={isDeletingFile}
-        />
+      {(selectedFiles.length > 0 || fileToDelete) && openDeleteDialog && (
+        <Dialog open={openDeleteDialog} onOpenChange={setOpenDeleteDialog}>
+          <DeleteDialogContent
+            files={
+              fileToDelete
+                ? [fileToDelete]
+                : files.filter((file) => selectedFiles.includes(file.id))
+            }
+            onDelete={handleDelete}
+            isLoading={isDeletingFiles}
+          />
+        </Dialog>
       )}
-    </Dialog>
+    </>
   )
 }
 
 interface DeleteDialogProps {
-  file: File
+  files: File[]
   onDelete: () => void
   isLoading: boolean
 }
-
-const DeleteDialog: FC<DeleteDialogProps> = ({ file, onDelete, isLoading }) => {
+const DeleteDialogContent: FC<DeleteDialogProps> = ({
+  files,
+  onDelete,
+  isLoading,
+}) => {
+  const isSingleFile = files.length === 1
   return (
     <DialogContent className="sm:max-w-[425px]">
       <DialogHeader>
-        <DialogTitle>Delete file</DialogTitle>
+        <DialogTitle>Delete {pluralize('file', files.length)}</DialogTitle>
         <DialogDescription>
-          Are you sure you want to delete <b>{file.name}</b>?
+          Are you sure you want to delete&nbsp;
+          {isSingleFile && <b>{files[0].name}&nbsp;</b>}
+          {pluralize('file', files.length, !isSingleFile)}?
         </DialogDescription>
       </DialogHeader>
 
