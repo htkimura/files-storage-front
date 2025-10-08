@@ -9,8 +9,8 @@ import {
   SidebarProvider,
   Sidebar as SidebarUI,
 } from '../ui/sidebar'
-import { HOME_PAGE_ROUTE } from '@/routes'
-import { File, LucideIcon, LogOut } from 'lucide-react'
+import { HOME_PAGE_ROUTE, IMAGES_PAGE_ROUTE } from '@/routes'
+import { File, LucideIcon, LogOut, Image } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
 import { useUser } from '@/contexts'
 import { FC, PropsWithChildren } from 'react'
@@ -28,6 +28,11 @@ const items = [
     label: 'Files',
     icon: File,
     href: HOME_PAGE_ROUTE,
+  },
+  {
+    label: 'Images',
+    icon: Image,
+    href: IMAGES_PAGE_ROUTE,
   },
 ]
 
