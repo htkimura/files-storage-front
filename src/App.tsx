@@ -7,7 +7,7 @@ import './css/typography.css'
 import './css/variables.css'
 import { useUser } from './contexts'
 import { Home } from './pages/Home'
-import { Images } from './pages/Images'
+import { Images } from './pages/Images/page'
 
 const AuthRoute = () => {
   const { token } = useUser()
