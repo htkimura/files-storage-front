@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App.tsx'
 import { Toaster } from './components/ui/toaster.tsx'
-import { UserProvider } from './contexts'
+import { OverlayProvider, UserProvider } from './contexts'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClient } from './config/query.ts'
 
@@ -13,7 +13,9 @@ const Root = () => {
       <BrowserRouter>
         <QueryClientProvider client={queryClient}>
           <UserProvider>
-            <App />
+            <OverlayProvider>
+              <App />
+            </OverlayProvider>
           </UserProvider>
         </QueryClientProvider>
         <Toaster />

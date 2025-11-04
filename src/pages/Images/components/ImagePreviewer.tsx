@@ -31,7 +31,7 @@ const ImagePreviewer: FC<ImagePreviewerProps> = ({
   return (
     <div
       onClick={handleClose}
-      className="z-10 top-0 left-0 absolute w-[100vw] h-[100vh] bg-gray-950 bg-opacity-50 items-center justify-center flex "
+      className="z-10 top-0 left-0 absolute w-[100vw] h-[100vh] bg-gray-950 bg-opacity-50 items-center justify-center flex"
     >
       <img
         src={file.presignedUrl}
