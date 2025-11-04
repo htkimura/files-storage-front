@@ -1,7 +1,7 @@
 import pluralize from 'pluralize-esm'
 import { Layout } from '@/components/layout/layout'
 import { config, queryDefaultOptions } from '@/config'
-import { useUser } from '@/contexts'
+import { useOverlay, useUser } from '@/contexts'
 import {
   File,
   useDeleteBulkFilesByIds,
@@ -279,6 +279,7 @@ const FilesTable: FC<FilesTableProps> = ({
   size,
   setPage,
 }) => {
+  const { setContent } = useOverlay()
   const [fileToDelete, setFileToDelete] = useState<File | null>(null) // saves the file to be deleted when clicked in a table line dropdown
   const [rowSelection, setRowSelection] = useState({}) // state object for table control
   const selectedFiles = Object.keys(rowSelection).map(
@@ -425,38 +426,44 @@ const FilesTable: FC<FilesTableProps> = ({
     )
   }
 
-  const handleDelete = async () =>
+  const handleDelete = async () => {
     deleteBulkFiles({
       params: { ids: fileToDelete ? [fileToDelete.id] : selectedFiles },
     })
+  }
+
+  useEffect(() => {
+    if (selectedFiles.length === 0) return setContent(undefined)
+
+    setContent(
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-10 bg-white px-4 py-3 rounded-lg shadow-lg border-2 z-10 gap-2 flex  items-center">
+        <Checkbox
+          id="bulk-actions-checkbox"
+          checked={headerCheckboxChecked}
+          onCheckedChange={
+            headerCheckboxChecked === 'indeterminate'
+              ? handleSelectAll
+              : handleUnselectAll
+          }
+        />
+        <label htmlFor="bulk-actions-checkbox" className="cursor-pointer">
+          Selected ({selectedFiles.length})
+        </label>
+        |
+        <button
+          className="text-red-500 flex items-center gap-1"
+          onClick={() => setOpenDeleteDialog(true)}
+        >
+          <TrashIcon width={18} />
+          Delete
+        </button>
+      </div>,
+    )
+  }, [selectedFiles.length])
 
   return (
     <>
       <div className="rounded-md border glass-shape glass-bg">
-        {selectedFiles.length > 0 && (
-          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-10 bg-white px-4 py-3 rounded-lg shadow-lg border-2 z-10 gap-2 flex  items-center">
-            <Checkbox
-              id="bulk-actions-checkbox"
-              checked={headerCheckboxChecked}
-              onCheckedChange={
-                headerCheckboxChecked === 'indeterminate'
-                  ? handleSelectAll
-                  : handleUnselectAll
-              }
-            />
-            <label htmlFor="bulk-actions-checkbox" className="cursor-pointer">
-              Selected ({selectedFiles.length})
-            </label>
-            |
-            <button
-              className="text-red-500 flex items-center gap-1"
-              onClick={() => setOpenDeleteDialog(true)}
-            >
-              <TrashIcon width={18} />
-              Delete
-            </button>
-          </div>
-        )}
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
