@@ -42,12 +42,12 @@ const SidebarItem = ({ item }: { item: SidebarItem }) => {
         <SidebarMenuItem>
           <SidebarMenuButton asChild>
             {item.href ? (
-              <Link to={item.href} className="text-inherit">
+              <Link to={item.href} className="text-white">
                 <item.icon />
                 <span>{item.label}</span>
               </Link>
             ) : (
-              <button onClick={item.onClick}>
+              <button onClick={item.onClick} className="text-white">
                 <item.icon />
                 <span>{item.label}</span>
               </button>

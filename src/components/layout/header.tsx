@@ -5,7 +5,7 @@ export const Header = () => {
 
   return (
     <header>
-      <div className="h-[70px] flex flex-row justify-end items-center p-5">
+      <div className="h-[70px] flex flex-row justify-end items-center p-5 text-white">
         Hi {user?.email.split('@')[0]}!
       </div>
     </header>

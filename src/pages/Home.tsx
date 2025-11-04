@@ -208,7 +208,7 @@ export const Home = () => {
     <Layout className="pb-10 px-10">
       <button
         className={classNames(
-          'border-2 border-dashed max-w-xl flex items-center justify-center flex-col m-auto mt-10 hover:border-orange-500 hover:bg-orange-50 transition-all duration-75 w-full h-44 mb-4',
+          'border-2 border-dashed max-w-xl flex items-center justify-center flex-col m-auto mt-10 hover:border-purple-500 hover:bg-purple-50 transition-all duration-75 w-full h-44 mb-4 text-white hover:text-slate-950',
           {
             'border-orange-500 bg-orange-50': isDragActive || isUploading,
             'p-10': !isUploading,

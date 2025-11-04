@@ -17,7 +17,7 @@ body {
   font-family: var(--font-primary);
   line-height: 1.5;
   color: var(--color-text);
-  background-image: url('/glassmorphism.jpg');  
+  background-image: url('/glassmorphism.jpeg');  
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
