@@ -14,7 +14,6 @@ import { File, LucideIcon, LogOut, Image } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
 import { useUser } from '@/contexts'
 import { FC, PropsWithChildren } from 'react'
-import { Separator } from '../ui/separator'
 
 interface SidebarItem {
   label: string
@@ -43,7 +42,7 @@ const SidebarItem = ({ item }: { item: SidebarItem }) => {
         <SidebarMenuItem>
           <SidebarMenuButton asChild>
             {item.href ? (
-              <Link to={item.href}>
+              <Link to={item.href} className="text-inherit">
                 <item.icon />
                 <span>{item.label}</span>
               </Link>
@@ -67,13 +66,12 @@ export const Sidebar: FC<PropsWithChildren> = ({ children }) => {
   return (
     <SidebarProvider>
       <SidebarUI collapsible="icon">
-        <SidebarHeader>
-          <div className="p-1">
+        <SidebarHeader className="h-[70px] flex justify-center">
+          <div className="p-5 ">
             <img src="/logo-text.png" alt="logo" width={70} />
           </div>
         </SidebarHeader>
-        <Separator />
-        <SidebarContent>
+        <SidebarContent className="mt-5 px-5">
           <SidebarMenu>
             {items.map((item) => (
               <SidebarItem key={item.href} item={item} />

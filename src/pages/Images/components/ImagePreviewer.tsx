@@ -25,7 +25,6 @@ const ImagePreviewer: FC<ImagePreviewerProps> = ({
   useEffect(() => {
     document.body.style.overflow = fileIdToPreview ? 'hidden' : 'auto'
   }, [fileIdToPreview])
-  console.log('[fetchedFiles]', fetchedFiles)
   const file = fetchedFiles[fileIdToPreview]
   if (!file) return null
   return (
@@ -69,8 +68,8 @@ const AllImagesPreviewer: FC<AllImagesPreviewerProps> = ({
           key={file.id}
           file={file}
           addFetchedFile={addFetchedFile}
-          maxHeight={150}
-          maxWidth={150}
+          maxHeight={100}
+          maxWidth={100}
           highlight={file.id === fileIdToPreview}
         />
       ))}

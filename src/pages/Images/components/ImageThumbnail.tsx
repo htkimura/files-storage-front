@@ -50,15 +50,21 @@ const ImageThumbnail: FC<Props> = ({
     <button
       onClick={handleClick}
       className={classNames(
-        `hover:opacity-60 hover:scale-105 hover:shadow-xl shadow-md transition-transform rounded-md bg-slate-100 max-w-[${maxWidth}px] max-h-[${maxHeight}px] overflow-hidden`,
+        `hover:opacity-60 hover:scale-105 hover:shadow-xl shadow-md transition-transform rounded-md bg-slate-100 overflow-hidden`,
         { 'ring-4 ring-blue-500': !!highlight },
       )}
     >
-      {!loaded && <Skeleton className="h-[200px] w-[200px] rounded-md" />}
+      {!loaded && (
+        <Skeleton
+          className={`h-[${maxHeight}px] w-[${maxWidth}px] rounded-md`}
+        />
+      )}
       <img
         src={file.presignedThumbnailUrl}
         alt={file.name}
         onLoad={() => setLoaded(true)}
+        width={maxWidth}
+        height={maxHeight}
       />
     </button>
   )

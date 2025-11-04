@@ -1,6 +1,6 @@
 import { Layout } from '@/components/layout/layout'
 import { queryDefaultOptions } from '@/config'
-import { useUser } from '@/contexts'
+import { useOverlay, useUser } from '@/contexts'
 import {
   FileWithPresignedUrl,
   useMyFiles,
@@ -69,17 +69,23 @@ export const Images = () => {
     }
   }, [hasMore, isLoadingFiles, setPage])
 
+  const { setContent } = useOverlay()
+
+  useEffect(() => {
+    if (!fileIdToPreview) return setContent(undefined)
+    setContent(
+      <ImagePreviewer
+        files={files}
+        fetchedFiles={fetchedFiles}
+        fileIdToPreview={fileIdToPreview}
+        handleClose={() => setFileIdToPreview(null)}
+        addFetchedFile={addFetchedFile}
+      />,
+    )
+  }, [fileIdToPreview, setContent, fetchedFiles, files])
+
   return (
     <Layout>
-      {fileIdToPreview && (
-        <ImagePreviewer
-          files={files}
-          fetchedFiles={fetchedFiles}
-          fileIdToPreview={fileIdToPreview}
-          handleClose={() => setFileIdToPreview(null)}
-          addFetchedFile={addFetchedFile}
-        />
-      )}
       <div className="flex p-5 gap-4 flex-wrap">
         {files.map((file) => (
           <ImageThumbnail

@@ -205,13 +205,14 @@ export const Home = () => {
   }
 
   return (
-    <Layout>
+    <Layout className="pb-10 px-10">
       <button
         className={classNames(
-          'border-2 border-dashed max-w-xl  flex items-center justify-center flex-col m-auto mt-10 hover:border-orange-500 hover:bg-orange-50 transition-all duration-75 w-full h-44',
+          'border-2 border-dashed max-w-xl flex items-center justify-center flex-col m-auto mt-10 hover:border-orange-500 hover:bg-orange-50 transition-all duration-75 w-full h-44 mb-4',
           {
             'border-orange-500 bg-orange-50': isDragActive || isUploading,
             'p-10': !isUploading,
+            'glass-bg': isDragActive || isUploading,
           },
         )}
         {...getRootProps()}
@@ -231,7 +232,7 @@ export const Home = () => {
           </>
         )}
       </button>
-      <div className="mt-10 p-10">
+      <div className="mt-10 p-10 glass-bg glass-shape flex flex-col gap-4">
         <h1>All files</h1>
         <FilesTable
           files={files}
@@ -431,7 +432,7 @@ const FilesTable: FC<FilesTableProps> = ({
 
   return (
     <>
-      <div className="rounded-md border">
+      <div className="rounded-md border glass-shape glass-bg">
         {selectedFiles.length > 0 && (
           <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-10 bg-white px-4 py-3 rounded-lg shadow-lg border-2 z-10 gap-2 flex  items-center">
             <Checkbox

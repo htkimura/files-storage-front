@@ -17,7 +17,9 @@ export const Layout: FC<Props> = ({ children, className }) => {
       <Sidebar>
         <div className="flex flex-col h-screen w-full">
           <Header />
-          <main className={`mr-5 ${className}`}>{children}</main>
+          <main className={`glass-bg glass-shape mr-5 ${className}`}>
+            {children}
+          </main>
         </div>
       </Sidebar>
     </>
