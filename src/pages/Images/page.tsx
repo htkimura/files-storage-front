@@ -86,7 +86,7 @@ export const Images = () => {
 
   return (
     <Layout>
-      <div className="flex p-5 gap-4 flex-wrap">
+      <div className="flex p-3 gap-2 flex-wrap h-fit">
         {files.map((file) => (
           <ImageThumbnail
             file={file}
@@ -107,7 +107,7 @@ export const Images = () => {
 }
 
 const SkeletonImageThumbnails = () => {
-  return Array.from({ length: 10 }).map(() => (
+  return Array.from({ length: 15 }).map(() => (
     <Skeleton className="h-[200px] w-[200px] rounded-md" />
   ))
 }

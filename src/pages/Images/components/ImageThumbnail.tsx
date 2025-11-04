@@ -65,6 +65,9 @@ const ImageThumbnail: FC<Props> = ({
         onLoad={() => setLoaded(true)}
         width={maxWidth}
         height={maxHeight}
+        className={classNames('object-cover object-center', {
+          hidden: !loaded,
+        })}
       />
     </button>
   )
