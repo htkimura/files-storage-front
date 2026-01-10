@@ -224,7 +224,7 @@ export const Home = () => {
             <input {...getInputProps()} />
             <CloudUploadIcon />
 
-            <span>
+            <span className="text-shadow">
               {isDragActive
                 ? 'Nice! Drop your file to start uploading it'
                 : 'Drag & Drop files or click to choose files'}
