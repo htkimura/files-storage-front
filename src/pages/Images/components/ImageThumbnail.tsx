@@ -12,6 +12,8 @@ import { FC, useState } from 'react'
 interface Props {
   file: FileWithPresignedThumbnailUrl
   addFetchedFile: (file: FileWithPresignedUrl) => void
+  setFileIdToPreview: (fileId: string) => void
+  fileAlreadyFetched?: boolean
   highlight?: boolean
   maxWidth?: number
   maxHeight?: number
@@ -20,6 +22,8 @@ interface Props {
 const ImageThumbnail: FC<Props> = ({
   file,
   addFetchedFile,
+  setFileIdToPreview,
+  fileAlreadyFetched = false,
   maxHeight = 200,
   maxWidth = 200,
   highlight = false,
@@ -41,6 +45,7 @@ const ImageThumbnail: FC<Props> = ({
 
   const handleClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation()
+    if (fileAlreadyFetched) return setFileIdToPreview(file.id)
     const { data: fileDataRaw } = await refetch()
     if (!fileDataRaw) return
     addFetchedFile(fileDataRaw?.data)

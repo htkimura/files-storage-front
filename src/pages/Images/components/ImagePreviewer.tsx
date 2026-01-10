@@ -13,6 +13,7 @@ interface ImagePreviewerProps {
   fileIdToPreview: string
   handleClose: () => void
   addFetchedFile: (file: FileWithPresignedUrl) => void
+  setFileIdToPreview: (fileId: string) => void
 }
 
 const ImagePreviewer: FC<ImagePreviewerProps> = ({
@@ -21,12 +22,14 @@ const ImagePreviewer: FC<ImagePreviewerProps> = ({
   fileIdToPreview,
   handleClose,
   addFetchedFile,
+  setFileIdToPreview,
 }) => {
   useEffect(() => {
     document.body.style.overflow = fileIdToPreview ? 'hidden' : 'auto'
   }, [fileIdToPreview])
   const file = fetchedFiles[fileIdToPreview]
   if (!file) return null
+
   return (
     <div
       onClick={handleClose}
@@ -41,7 +44,9 @@ const ImagePreviewer: FC<ImagePreviewerProps> = ({
       <div className="absolute bottom-0">
         <AllImagesPreviewer
           addFetchedFile={addFetchedFile}
+          setFileIdToPreview={setFileIdToPreview}
           files={files}
+          fetchedFiles={fetchedFiles}
           fileIdToPreview={fileIdToPreview}
         />
       </div>
@@ -53,13 +58,17 @@ export default ImagePreviewer
 
 interface AllImagesPreviewerProps {
   files: FileWithPresignedThumbnailUrl[]
+  fetchedFiles: FetchedFiles
   addFetchedFile: (file: FileWithPresignedUrl) => void
   fileIdToPreview: string
+  setFileIdToPreview: (fileId: string) => void
 }
 const AllImagesPreviewer: FC<AllImagesPreviewerProps> = ({
   files,
+  fetchedFiles,
   addFetchedFile,
   fileIdToPreview,
+  setFileIdToPreview,
 }) => {
   return (
     <div className="flex gap-2 overflow-x-auto p-2 bg-gray-800 bg-opacity-80 max-h-[15vh] overflow-y-hidden">
@@ -67,7 +76,9 @@ const AllImagesPreviewer: FC<AllImagesPreviewerProps> = ({
         <ImageThumbnail
           key={file.id}
           file={file}
+          setFileIdToPreview={setFileIdToPreview}
           addFetchedFile={addFetchedFile}
+          fileAlreadyFetched={!!fetchedFiles[file.id]}
           maxHeight={100}
           maxWidth={100}
           highlight={file.id === fileIdToPreview}

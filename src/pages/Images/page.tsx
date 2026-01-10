@@ -80,6 +80,7 @@ export const Images = () => {
         fileIdToPreview={fileIdToPreview}
         handleClose={() => setFileIdToPreview(null)}
         addFetchedFile={addFetchedFile}
+        setFileIdToPreview={setFileIdToPreview}
       />,
     )
   }, [fileIdToPreview, setContent, fetchedFiles, files])
@@ -91,6 +92,8 @@ export const Images = () => {
           <ImageThumbnail
             file={file}
             addFetchedFile={addFetchedFile}
+            setFileIdToPreview={setFileIdToPreview}
+            fileAlreadyFetched={!!fetchedFiles[file.id]}
             key={file.id}
           />
         ))}
