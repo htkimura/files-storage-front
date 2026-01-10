@@ -80,7 +80,7 @@ const UploadingAnimation = () => {
   return <>{View}</>
 }
 
-export const Home = () => {
+export const Files = () => {
   const { token } = useUser()
 
   const [isUploading, setIsUploading] = useState(false)
