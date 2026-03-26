@@ -8,7 +8,7 @@ import {
   useGetFileById,
   useMyFiles,
 } from '@htkimura/files-storage-backend.rest-client'
-import axios, { AxiosRequestConfig } from 'axios'
+import type { AxiosRequestConfig } from 'axios'
 import {
   CloudUploadIcon,
   DownloadIcon,
@@ -33,7 +33,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { FC, useEffect, useState } from 'react'
+import { FC, useEffect, useRef, useState } from 'react'
 import {
   Dialog,
   DialogClose,
@@ -63,15 +63,22 @@ import classNames from 'classnames'
 import { useLottie } from 'lottie-react'
 import cloudUploadingAnimation from '@/animations/cloud-uploading.json'
 import { Button } from '@/components/ui/button'
+import {
+  UploadProgressPopup,
+  type UploadRowState,
+} from '@/components/upload/UploadProgressPopup'
+import { uploadFileToStorage } from '@/lib/chunked-upload'
 import toast from 'react-hot-toast'
 
-const UploadingAnimation = () => {
+const DragUploadAnimation = () => {
   const { View } = useLottie({
     animationData: cloudUploadingAnimation,
     loop: true,
     autoplay: true,
     style: {
-      height: 150,
+      height: 130,
+      width: '100%',
+      maxWidth: 220,
       padding: 0,
       margin: 0,
     },
@@ -83,7 +90,9 @@ const UploadingAnimation = () => {
 export const Files = () => {
   const { token } = useUser()
 
-  const [isUploading, setIsUploading] = useState(false)
+  const [uploadItems, setUploadItems] = useState<UploadRowState[]>([])
+  const [uploadCollapsed, setUploadCollapsed] = useState(false)
+  const controllersRef = useRef(new Map<string, AbortController>())
 
   const clientAxiosConfig = {
     ...queryDefaultOptions.axios,
@@ -91,53 +100,6 @@ export const Files = () => {
       Authorization: `Bearer ${token}`,
     },
   }
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    noKeyboard: true,
-    onDrop: async (acceptedFiles) => {
-      acceptedFiles.forEach(async (file) => {
-        setIsUploading(true)
-        try {
-          const { data } = await axios.get(
-            config.apiBaseUrl + '/uploads/presigned-url',
-            {
-              params: {
-                fileName: file.name,
-                fileSize: file.size,
-                fileType: file.type,
-              },
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            },
-          )
-
-          const {
-            presignedUploadUrl,
-            file: { id: fileId },
-          } = data
-
-          await axios.put(presignedUploadUrl, file, {
-            headers: {
-              'Content-Type': file.type,
-            },
-          })
-
-          await axios.post(
-            config.apiBaseUrl + '/uploads/image-uploaded',
-            { fileId },
-            { headers: { Authorization: `Bearer ${token}` } },
-          )
-
-          await refetch()
-        } catch (error) {
-          console.error('[error]', error)
-        } finally {
-          setIsUploading(false)
-        }
-      })
-    },
-  })
 
   const [page, setPage] = useState(1)
   const size = 20
@@ -152,6 +114,99 @@ export const Files = () => {
       axios: clientAxiosConfig,
     },
   )
+
+  const handleCancelAllUploads = () => {
+    controllersRef.current.forEach((ac) => ac.abort())
+    controllersRef.current.clear()
+    setUploadItems((prev) =>
+      prev.map((i) =>
+        i.status === 'uploading' || i.status === 'queued'
+          ? { ...i, status: 'cancelled' }
+          : i,
+      ),
+    )
+  }
+
+  const handleDismissUploadPanel = () => {
+    controllersRef.current.forEach((ac) => ac.abort())
+    controllersRef.current.clear()
+    setUploadItems([])
+  }
+
+  const handleRemoveUploadItem = (id: string) => {
+    setUploadItems((prev) => prev.filter((row) => row.id !== id))
+  }
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    noKeyboard: true,
+    onDrop: (acceptedFiles) => {
+      if (acceptedFiles.length === 0) return
+      const authHeaders = { Authorization: `Bearer ${token}` }
+
+      const pairs = acceptedFiles.map((file) => ({
+        file,
+        row: {
+          id: crypto.randomUUID(),
+          name: file.name,
+          size: file.size,
+          progress: 0,
+          status: 'uploading' as const,
+        },
+      }))
+
+      setUploadCollapsed(false)
+      setUploadItems((prev) => [...prev, ...pairs.map((p) => p.row)])
+
+      for (const { file, row } of pairs) {
+        const ac = new AbortController()
+        controllersRef.current.set(row.id, ac)
+        void (async () => {
+          try {
+            await uploadFileToStorage(file, config.apiBaseUrl, authHeaders, {
+              signal: ac.signal,
+              onProgress: (p) =>
+                setUploadItems((prev) =>
+                  prev.map((i) =>
+                    i.id === row.id ? { ...i, progress: p } : i,
+                  ),
+                ),
+            })
+            setUploadItems((prev) =>
+              prev.map((i) =>
+                i.id === row.id
+                  ? { ...i, status: 'complete', progress: 100 }
+                  : i,
+              ),
+            )
+            await refetch()
+            toast.success(`Uploaded ${row.name}`)
+          } catch (error) {
+            if (ac.signal.aborted) {
+              setUploadItems((prev) =>
+                prev.map((i) =>
+                  i.id === row.id ? { ...i, status: 'cancelled' } : i,
+                ),
+              )
+            } else {
+              console.error('[upload]', error)
+              const message =
+                error instanceof Error ? error.message : 'Upload failed'
+              setUploadItems((prev) =>
+                prev.map((i) =>
+                  i.id === row.id
+                    ? { ...i, status: 'error', errorMessage: message }
+                    : i,
+                ),
+              )
+              toast.error(message)
+            }
+          } finally {
+            controllersRef.current.delete(row.id)
+          }
+        })()
+      }
+    },
+  })
 
   const { data: filesData } = filesDataRaw || {}
 
@@ -207,31 +262,46 @@ export const Files = () => {
   return (
     <Layout className="pb-10 px-10">
       <button
+        type="button"
         className={classNames(
-          'border-2 border-dashed max-w-xl flex items-center justify-center flex-col m-auto mt-10 hover:border-purple-500 hover:bg-purple-50 transition-all duration-75 w-full h-44 mb-4 text-white hover:text-slate-950',
+          'border-2 border-dashed max-w-xl flex items-center justify-center flex-col m-auto mt-10 transition-all duration-75 w-full mb-4',
+          'hover:border-[var(--color-primary)] hover:bg-purple-50',
+          'text-white hover:text-slate-950',
+          isDragActive
+            ? 'min-h-44 h-auto border-[var(--color-primary)] bg-purple-50 py-4 px-6 text-slate-900'
+            : 'h-44 p-10',
           {
-            'border-orange-500 bg-orange-50': isDragActive || isUploading,
-            'p-10': !isUploading,
-            'glass-bg': isDragActive || isUploading,
+            'glass-bg': isDragActive,
           },
         )}
         {...getRootProps()}
       >
-        {isUploading ? (
-          <UploadingAnimation />
+        <input {...getInputProps()} />
+        {isDragActive ? (
+          <>
+            <DragUploadAnimation />
+            <span className="text-sm font-medium text-slate-800 mt-1">
+              Nice! Drop your file to start uploading it
+            </span>
+          </>
         ) : (
           <>
-            <input {...getInputProps()} />
             <CloudUploadIcon />
-
             <span className="text-shadow">
-              {isDragActive
-                ? 'Nice! Drop your file to start uploading it'
-                : 'Drag & Drop files or click to choose files'}
+              Drag & Drop files or click to choose files
             </span>
           </>
         )}
       </button>
+
+      <UploadProgressPopup
+        items={uploadItems}
+        collapsed={uploadCollapsed}
+        onToggleCollapse={() => setUploadCollapsed((c) => !c)}
+        onDismiss={handleDismissUploadPanel}
+        onCancelAll={handleCancelAllUploads}
+        onRemoveItem={handleRemoveUploadItem}
+      />
       <div className="mt-10 p-10 glass-bg glass-shape flex flex-col gap-4">
         <h1>All files</h1>
         <FilesTable
