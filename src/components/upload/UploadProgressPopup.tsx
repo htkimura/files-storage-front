@@ -84,7 +84,7 @@ const CircularProgress: FC<{ value: number }> = ({ value }) => {
           cy={cy}
           r={r}
           fill="none"
-          className="stroke-blue-600 transition-[stroke-dashoffset] duration-200"
+          className="stroke-primary transition-[stroke-dashoffset] duration-200"
           strokeWidth="2.5"
           strokeLinecap="round"
           strokeDasharray={c}
@@ -167,9 +167,7 @@ export const UploadProgressPopup: FC<UploadProgressPopupProps> = ({
     const loadedBytes = uploading.reduce(
       (s, i) =>
         s +
-        i.size *
-          (i.status === 'queued' ? 0 : Math.min(100, i.progress)) *
-          0.01,
+        i.size * (i.status === 'queued' ? 0 : Math.min(100, i.progress)) * 0.01,
       0,
     )
     const remaining = Math.max(0, totalBytes - loadedBytes)
@@ -220,7 +218,9 @@ export const UploadProgressPopup: FC<UploadProgressPopupProps> = ({
             onClick={onToggleCollapse}
             className="p-1.5 rounded-md hover:bg-slate-100 text-slate-600"
             aria-expanded={!collapsed}
-            aria-label={collapsed ? 'Expand upload list' : 'Collapse upload list'}
+            aria-label={
+              collapsed ? 'Expand upload list' : 'Collapse upload list'
+            }
           >
             {collapsed ? (
               <ChevronUp className="w-4 h-4" />
@@ -242,15 +242,15 @@ export const UploadProgressPopup: FC<UploadProgressPopupProps> = ({
       {!collapsed && (
         <>
           {showCancelAll && (
-            <div className="flex items-center justify-between gap-2 px-3 py-2 bg-sky-50/90 border-b border-sky-100/80">
-              <p className="mb-0 text-xs text-sky-900 leading-snug flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-2 border-b border-primary/10 bg-primary/[0.06] px-3 py-2">
+              <p className="mb-0 flex-1 min-w-0 text-xs leading-snug text-foreground">
                 {etaText}
               </p>
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="shrink-0 h-8 text-xs text-sky-800 hover:text-sky-950 hover:bg-sky-100/80"
+                className="h-8 shrink-0 text-xs text-foreground hover:bg-primary/10"
                 onClick={onCancelAll}
               >
                 Cancel
@@ -304,7 +304,7 @@ export const UploadProgressPopup: FC<UploadProgressPopupProps> = ({
                   ) : row.status === 'uploading' ? (
                     <CircularProgress value={row.progress} />
                   ) : row.status === 'queued' ? (
-                    <Loader2 className="h-6 w-6 shrink-0 animate-spin text-blue-600" />
+                    <Loader2 className="h-6 w-6 shrink-0 animate-spin text-primary" />
                   ) : (
                     <div className="flex h-7 w-7 items-center justify-center">
                       <span className="text-sm leading-none text-slate-300">

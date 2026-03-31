@@ -1,4 +1,4 @@
-import { Link } from 'react-router'
+import { Link, useLocation } from 'react-router-dom'
 import {
   SidebarContent,
   SidebarFooter,
@@ -9,24 +9,25 @@ import {
   SidebarProvider,
   Sidebar as SidebarUI,
 } from '../ui/sidebar'
-import { HOME_PAGE_ROUTE, IMAGES_PAGE_ROUTE } from '@/routes'
-import { File, LucideIcon, LogOut, Image } from 'lucide-react'
+import { FILES_PAGE_ROUTE, IMAGES_PAGE_ROUTE } from '@/routes'
+import { Files, Image, LogOut, LucideIcon } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
 import { useUser } from '@/contexts'
 import { FC, PropsWithChildren } from 'react'
+import { cn } from '@/lib/utils'
 
-interface SidebarItem {
+interface SidebarItemConfig {
   label: string
   icon: LucideIcon
   href?: string
   onClick?: () => void
 }
 
-const items = [
+const navItems: SidebarItemConfig[] = [
   {
     label: 'Files',
-    icon: File,
-    href: HOME_PAGE_ROUTE,
+    icon: Files,
+    href: FILES_PAGE_ROUTE,
   },
   {
     label: 'Images',
@@ -35,23 +36,47 @@ const items = [
   },
 ]
 
-const SidebarItem = ({ item }: { item: SidebarItem }) => {
+const SidebarNavItem = ({ item }: { item: SidebarItemConfig }) => {
+  const location = useLocation()
+  const isActive =
+    !!item.href &&
+    (location.pathname === item.href ||
+      location.pathname.startsWith(`${item.href}/`))
+
+  if (item.onClick) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              onClick={item.onClick}
+              className="text-sidebar-foreground"
+            >
+              <item.icon className="size-4" />
+              <span>{item.label}</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </TooltipTrigger>
+        <TooltipContent side="right">{item.label}</TooltipContent>
+      </Tooltip>
+    )
+  }
+
   return (
     <Tooltip>
-      <TooltipTrigger>
+      <TooltipTrigger asChild>
         <SidebarMenuItem>
-          <SidebarMenuButton asChild>
-            {item.href ? (
-              <Link to={item.href} className="text-white">
-                <item.icon />
-                <span>{item.label}</span>
-              </Link>
-            ) : (
-              <button onClick={item.onClick} className="text-white">
-                <item.icon />
-                <span>{item.label}</span>
-              </button>
-            )}
+          <SidebarMenuButton asChild isActive={isActive}>
+            <Link
+              to={item.href!}
+              className={cn(
+                'no-underline hover:no-underline',
+                isActive && 'font-semibold',
+              )}
+            >
+              <item.icon className="size-4" />
+              <span>{item.label}</span>
+            </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>
       </TooltipTrigger>
@@ -65,25 +90,34 @@ export const Sidebar: FC<PropsWithChildren> = ({ children }) => {
 
   return (
     <SidebarProvider>
-      <SidebarUI collapsible="icon">
-        <SidebarHeader className="h-[70px] flex justify-center">
-          <div className="p-5 ">
-            <img src="/logo-text.png" alt="logo" width={70} />
+      <SidebarUI
+        collapsible="icon"
+        className="border-r border-sidebar-border bg-sidebar text-sidebar-foreground"
+      >
+        <SidebarHeader className="flex h-16 flex-row items-center justify-center gap-0 border-b border-sidebar-border/80 px-3 py-0">
+          <div className="flex h-full w-full items-center justify-center overflow-hidden px-1 group-data-[collapsible=icon]:px-0">
+            <img
+              src="/logo-text.png"
+              alt=""
+              width={72}
+              height={28}
+              className="block h-7 w-auto max-w-full object-contain object-center opacity-90"
+            />
           </div>
         </SidebarHeader>
-        <SidebarContent className="mt-5 px-5">
+        <SidebarContent className="gap-1 px-2 py-4">
           <SidebarMenu>
-            {items.map((item) => (
-              <SidebarItem key={item.href} item={item} />
+            {navItems.map((item) => (
+              <SidebarNavItem key={item.href} item={item} />
             ))}
           </SidebarMenu>
         </SidebarContent>
-        <SidebarFooter>
+        <SidebarFooter className="border-t border-sidebar-border/80 p-2">
           <SidebarMenu>
-            <SidebarItem
+            <SidebarNavItem
               item={{
                 icon: LogOut,
-                label: 'Logout',
+                label: 'Log out',
                 onClick: logout,
               }}
             />

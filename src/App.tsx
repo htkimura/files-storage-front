@@ -24,6 +24,7 @@ function App() {
     <Routes>
       <Route path={LOGIN_PAGE_ROUTE} element={<Login />} />
       <Route element={<AuthRoute />}>
+        <Route path="/" element={<Navigate to={FILES_PAGE_ROUTE} replace />} />
         <Route path={FILES_PAGE_ROUTE} element={<Files />} />
         <Route path={IMAGES_PAGE_ROUTE} element={<Images />} />
       </Route>

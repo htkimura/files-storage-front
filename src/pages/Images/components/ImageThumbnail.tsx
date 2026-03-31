@@ -55,8 +55,9 @@ const ImageThumbnail: FC<Props> = ({
     <button
       onClick={handleClick}
       className={classNames(
-        `hover:opacity-60 hover:scale-105 hover:shadow-xl shadow-md transition-transform rounded-md bg-slate-100 overflow-hidden`,
-        { 'ring-4 ring-blue-500': !!highlight },
+        'overflow-hidden rounded-xl border border-border/80 bg-muted shadow-sm transition-all duration-200',
+        'hover:scale-[1.02] hover:border-primary/25 hover:shadow-md',
+        { 'ring-2 ring-primary ring-offset-2 ring-offset-card': !!highlight },
       )}
     >
       {!loaded && (

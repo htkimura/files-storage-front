@@ -86,24 +86,34 @@ export const Images = () => {
   }, [fileIdToPreview, setContent, fetchedFiles, files])
 
   return (
-    <Layout>
-      <div className="flex p-3 gap-2 flex-wrap h-fit">
-        {files.map((file) => (
-          <ImageThumbnail
-            file={file}
-            addFetchedFile={addFetchedFile}
-            setFileIdToPreview={setFileIdToPreview}
-            fileAlreadyFetched={!!fetchedFiles[file.id]}
-            key={file.id}
-          />
-        ))}
-        {isLoadingFiles && <SkeletonImageThumbnails />}
-        {hasMore && (
-          <div
-            ref={observerRef}
-            className="h-10 flex items-center justify-center"
-          />
-        )}
+    <Layout className="p-0">
+      <div className="flex flex-col gap-8 p-6 md:p-8 md:pb-10">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
+            Images
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Open any thumbnail to preview in full screen
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          {files.map((file) => (
+            <ImageThumbnail
+              file={file}
+              addFetchedFile={addFetchedFile}
+              setFileIdToPreview={setFileIdToPreview}
+              fileAlreadyFetched={!!fetchedFiles[file.id]}
+              key={file.id}
+            />
+          ))}
+          {isLoadingFiles && <SkeletonImageThumbnails />}
+          {hasMore && (
+            <div
+              ref={observerRef}
+              className="flex h-10 w-full items-center justify-center"
+            />
+          )}
+        </div>
       </div>
     </Layout>
   )
@@ -111,6 +121,6 @@ export const Images = () => {
 
 const SkeletonImageThumbnails = () => {
   return Array.from({ length: 15 }).map(() => (
-    <Skeleton className="h-[200px] w-[200px] rounded-md" />
+    <Skeleton className="h-[200px] w-[200px] rounded-xl" />
   ))
 }

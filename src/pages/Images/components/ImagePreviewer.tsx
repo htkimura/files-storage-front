@@ -3,6 +3,7 @@ import {
   FileWithPresignedUrl,
 } from '@htkimura/files-storage-backend.rest-client'
 import { FC, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import ImageThumbnail from './ImageThumbnail'
 
 export type FetchedFiles = Record<string, FileWithPresignedUrl>
@@ -30,10 +31,11 @@ const ImagePreviewer: FC<ImagePreviewerProps> = ({
   const file = fetchedFiles[fileIdToPreview]
   if (!file) return null
 
-  return (
+  const layer = (
     <div
+      role="presentation"
       onClick={handleClose}
-      className="z-10 top-0 left-0 absolute w-[100vw] h-[100vh] bg-gray-950 bg-opacity-50 items-center justify-center flex"
+      className="fixed inset-0 z-[500] flex items-center justify-center bg-gray-950/50"
     >
       <img
         src={file.presignedUrl}
@@ -41,7 +43,7 @@ const ImagePreviewer: FC<ImagePreviewerProps> = ({
         onClick={(e) => e.stopPropagation()}
         className="max-h-[70vh] shadow-2xl"
       />
-      <div className="absolute bottom-0">
+      <div className="absolute inset-x-0 bottom-0 flex justify-center pb-[max(0.5rem,env(safe-area-inset-bottom,0px))]">
         <AllImagesPreviewer
           addFetchedFile={addFetchedFile}
           setFileIdToPreview={setFileIdToPreview}
@@ -52,6 +54,12 @@ const ImagePreviewer: FC<ImagePreviewerProps> = ({
       </div>
     </div>
   )
+
+  if (typeof document === 'undefined') {
+    return null
+  }
+
+  return createPortal(layer, document.body)
 }
 
 export default ImagePreviewer

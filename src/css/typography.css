@@ -1,7 +1,7 @@
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-secondary);
   font-weight: 700;
-  color: var(--color-text);
+  color: hsl(var(--foreground));
   line-height: 1.2;
 }
 

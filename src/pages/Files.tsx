@@ -260,50 +260,59 @@ export const Files = () => {
   }
 
   return (
-    <Layout className="pb-10 px-10">
-      <button
-        type="button"
-        className={classNames(
-          'border-2 border-dashed max-w-xl flex items-center justify-center flex-col m-auto mt-10 transition-all duration-75 w-full mb-4',
-          'hover:border-[var(--color-primary)] hover:bg-purple-50',
-          'text-white hover:text-slate-950',
-          isDragActive
-            ? 'min-h-44 h-auto border-[var(--color-primary)] bg-purple-50 py-4 px-6 text-slate-900'
-            : 'h-44 p-10',
-          {
-            'glass-bg': isDragActive,
-          },
-        )}
-        {...getRootProps()}
-      >
-        <input {...getInputProps()} />
-        {isDragActive ? (
-          <>
-            <DragUploadAnimation />
-            <span className="text-sm font-medium text-slate-800 mt-1">
-              Nice! Drop your file to start uploading it
-            </span>
-          </>
-        ) : (
-          <>
-            <CloudUploadIcon />
-            <span className="text-shadow">
-              Drag & Drop files or click to choose files
-            </span>
-          </>
-        )}
-      </button>
+    <Layout className="p-0">
+      <div className="flex flex-col gap-8 p-6 md:p-8 md:pb-10">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
+            All files
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Upload, download, and organize your documents
+          </p>
+        </div>
 
-      <UploadProgressPopup
-        items={uploadItems}
-        collapsed={uploadCollapsed}
-        onToggleCollapse={() => setUploadCollapsed((c) => !c)}
-        onDismiss={handleDismissUploadPanel}
-        onCancelAll={handleCancelAllUploads}
-        onRemoveItem={handleRemoveUploadItem}
-      />
-      <div className="mt-10 p-10 glass-bg glass-shape flex flex-col gap-4">
-        <h1>All files</h1>
+        <button
+          type="button"
+          className={classNames(
+            'group flex max-w-xl flex-col items-center justify-center rounded-2xl border-2 border-dashed transition-all duration-200',
+            'border-muted-foreground/20 bg-muted/30 text-muted-foreground',
+            'hover:border-primary/35 hover:bg-primary/[0.04] hover:text-foreground',
+            isDragActive
+              ? 'min-h-44 border-primary bg-primary/[0.06] py-5 text-foreground'
+              : 'h-44 px-6 py-8',
+          )}
+          {...getRootProps()}
+        >
+          <input {...getInputProps()} />
+          {isDragActive ? (
+            <>
+              <DragUploadAnimation />
+              <span className="mt-2 text-sm font-medium text-foreground">
+                Drop files to upload
+              </span>
+            </>
+          ) : (
+            <>
+              <CloudUploadIcon className="mb-3 h-10 w-10 opacity-70 transition-opacity group-hover:opacity-100" />
+              <span className="text-center text-sm font-medium text-foreground">
+                Drag & drop files here
+              </span>
+              <span className="mt-1 text-center text-xs text-muted-foreground">
+                or click to browse
+              </span>
+            </>
+          )}
+        </button>
+
+        <UploadProgressPopup
+          items={uploadItems}
+          collapsed={uploadCollapsed}
+          onToggleCollapse={() => setUploadCollapsed((c) => !c)}
+          onDismiss={handleDismissUploadPanel}
+          onCancelAll={handleCancelAllUploads}
+          onRemoveItem={handleRemoveUploadItem}
+        />
+
         <FilesTable
           files={files}
           refetch={refetch}
@@ -432,8 +441,11 @@ const FilesTable: FC<FilesTableProps> = ({
       id: 'actions',
       cell: ({ row }) => (
         <DropdownMenu>
-          <DropdownMenuTrigger>
-            <EllipsisVerticalIcon />
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+              <EllipsisVerticalIcon className="h-4 w-4" />
+              <span className="sr-only">Open menu</span>
+            </Button>
           </DropdownMenuTrigger>
 
           <DropdownMenuContent className="w-56" align="start">
@@ -506,7 +518,7 @@ const FilesTable: FC<FilesTableProps> = ({
     if (selectedFiles.length === 0) return setContent(undefined)
 
     setContent(
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-10 bg-white px-4 py-3 rounded-lg shadow-lg border-2 z-10 gap-2 flex  items-center">
+      <div className="fixed bottom-6 left-1/2 z-[280] flex -translate-x-1/2 items-center gap-3 rounded-full border border-border bg-card/95 px-4 py-2.5 shadow-lg backdrop-blur-sm">
         <Checkbox
           id="bulk-actions-checkbox"
           checked={headerCheckboxChecked}
@@ -516,12 +528,16 @@ const FilesTable: FC<FilesTableProps> = ({
               : handleUnselectAll
           }
         />
-        <label htmlFor="bulk-actions-checkbox" className="cursor-pointer">
+        <label
+          htmlFor="bulk-actions-checkbox"
+          className="cursor-pointer text-sm font-medium text-foreground"
+        >
           Selected ({selectedFiles.length})
         </label>
-        |
+        <span className="text-border text-lg leading-none">|</span>
         <button
-          className="text-red-500 flex items-center gap-1"
+          type="button"
+          className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
           onClick={() => setOpenDeleteDialog(true)}
         >
           <TrashIcon width={18} />
@@ -533,14 +549,20 @@ const FilesTable: FC<FilesTableProps> = ({
 
   return (
     <>
-      <div className="rounded-md border glass-shape glass-bg">
+      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
+              <TableRow
+                key={headerGroup.id}
+                className="border-b border-border/80 bg-muted/40 hover:bg-muted/40"
+              >
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id}>
+                    <TableHead
+                      key={header.id}
+                      className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                    >
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -559,7 +581,6 @@ const FilesTable: FC<FilesTableProps> = ({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && 'selected'}
-                  className="w-fit"
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
@@ -689,7 +710,7 @@ const DeleteDialogContent: FC<DeleteDialogProps> = ({
         </DialogClose>
         <Button
           type="submit"
-          className="bg-red-500 hover:bg-red-700"
+          variant="destructive"
           onClick={onDelete}
           disabled={isLoading}
         >

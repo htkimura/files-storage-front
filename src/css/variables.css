@@ -1,12 +1,14 @@
 :root {
-  --color-primary: #5400AB;
-  --color-secondary: #FF9800;
-  --color-text: #333;
-  --color-bg: #FAFAFA;
-  --color-border: #DDD;
+  /* Blue-violet (indigo-leaning purple) */
+  --color-primary: #4d46e8;
+  --color-secondary: #6366f1;
+  --color-text: #0f172a;
+  --color-text-muted: #64748b;
+  --color-bg: #f6f5fa;
+  --color-border: #e7e5ef;
 
-  --font-primary: 'Inter', sans-serif;
-  --font-secondary: 'Roboto', sans-serif;
+  --font-primary: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+  --font-secondary: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
 
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
@@ -20,6 +22,6 @@
   --space-lg: 24px;
   --space-xl: 32px;
 
-  --border-radius: 4px;
-  --transition: 0.3s ease-in-out;
+  --border-radius: 12px;
+  --transition: 0.2s ease;
 }
