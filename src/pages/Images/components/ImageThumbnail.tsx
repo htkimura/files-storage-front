@@ -30,6 +30,7 @@ const ImageThumbnail: FC<Props> = ({
 }) => {
   const { token } = useUser()
   const [loaded, setLoaded] = useState(false)
+  const [thumbFailed, setThumbFailed] = useState(false)
 
   const clientAxiosConfig = {
     ...queryDefaultOptions.axios,
@@ -60,21 +61,31 @@ const ImageThumbnail: FC<Props> = ({
         { 'ring-2 ring-primary ring-offset-2 ring-offset-card': !!highlight },
       )}
     >
-      {!loaded && (
-        <Skeleton
-          className={`h-[${maxHeight}px] w-[${maxWidth}px] rounded-md`}
-        />
+      {file.presignedThumbnailUrl && !thumbFailed ? (
+        <>
+          {!loaded && (
+            <Skeleton className="h-[200px] w-[200px] rounded-md" />
+          )}
+          <img
+            src={file.presignedThumbnailUrl}
+            alt={file.name}
+            onLoad={() => setLoaded(true)}
+            onError={() => setThumbFailed(true)}
+            width={maxWidth}
+            height={maxHeight}
+            className={classNames('object-cover object-center', {
+              hidden: !loaded,
+            })}
+          />
+        </>
+      ) : (
+        <div
+          className="flex items-center justify-center bg-muted text-xs text-muted-foreground"
+          style={{ width: maxWidth, height: maxHeight }}
+        >
+          No preview
+        </div>
       )}
-      <img
-        src={file.presignedThumbnailUrl}
-        alt={file.name}
-        onLoad={() => setLoaded(true)}
-        width={maxWidth}
-        height={maxHeight}
-        className={classNames('object-cover object-center', {
-          hidden: !loaded,
-        })}
-      />
     </button>
   )
 }
