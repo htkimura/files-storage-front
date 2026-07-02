@@ -35,7 +35,7 @@ export const MyDrive = () => {
     isLoading: filesInitialLoading,
     isFetching: filesFetching,
   } = useMyFiles(
-    { page, size },
+    { page, size, folderId: null },
     {
       axios: clientAxiosConfig,
     },
@@ -129,17 +129,14 @@ export const MyDrive = () => {
       mutation: {
         onSuccess: () => {
           if (fileToDelete) {
-            setAllFiles((prev) =>
-              prev.filter((f) => f.id !== fileToDelete.id),
-            )
+            setAllFiles((prev) => prev.filter((f) => f.id !== fileToDelete.id))
           }
           setOpenDeleteDialog(false)
           toast.success('File deleted successfully')
         },
         onError: (error: { response?: { data?: { message?: string } } }) => {
           toast.error(
-            error.response?.data?.message ||
-              'Error unexpected during deletion',
+            error.response?.data?.message || 'Error unexpected during deletion',
           )
         },
       },
@@ -164,7 +161,7 @@ export const MyDrive = () => {
             My Drive
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Folders and every file in your library
+            Folders and every file in your memory vault
           </p>
         </div>
 
