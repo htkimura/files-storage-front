@@ -22,11 +22,11 @@ export const Layout: FC<Props> = ({ children, className }) => {
       />
       {content && content}
       <Sidebar>
-        <div className="flex min-h-svh w-full flex-col bg-transparent">
+        <div className="flex h-svh w-full flex-col overflow-hidden bg-transparent">
           <Header />
           <main
             className={cn(
-              'mx-3 mb-3 mt-0 flex-1 overflow-auto rounded-2xl border border-border/80 bg-card shadow-sm md:mx-5 md:mb-5 md:mt-1',
+              'scroll-area mx-3 mb-3 mt-0 min-h-0 flex-1 rounded-2xl border border-border/80 bg-card shadow-sm md:mx-5 md:mb-5 md:mt-1',
               className,
             )}
           >

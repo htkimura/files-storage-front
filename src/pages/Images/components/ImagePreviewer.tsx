@@ -26,8 +26,13 @@ const ImagePreviewer: FC<ImagePreviewerProps> = ({
   setFileIdToPreview,
 }) => {
   useEffect(() => {
-    document.body.style.overflow = fileIdToPreview ? 'hidden' : 'auto'
-  }, [fileIdToPreview])
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [])
   const file = fetchedFiles[fileIdToPreview]
   if (!file) return null
 

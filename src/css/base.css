@@ -72,7 +72,50 @@ select {
     --sidebar-accent-foreground: 247 65% 36%;
     --sidebar-border: 248 20% 92%;
     --sidebar-ring: 247 75% 54%;
+    --scrollbar-size: 10px;
+    --scrollbar-track: hsl(var(--muted));
+    --scrollbar-thumb: hsl(var(--muted-foreground) / 0.35);
+    --scrollbar-thumb-hover: hsl(var(--muted-foreground) / 0.55);
   }
+}
+
+/*
+  Persistent scrollbars for scrollable regions.
+  macOS hides overlay scrollbars by default (System Settings → Appearance → Show scroll bars).
+  Custom ::-webkit-scrollbar styling switches WebKit/Blink to classic, always-visible bars.
+*/
+.scroll-area {
+  overflow: auto;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+.scroll-area::-webkit-scrollbar {
+  -webkit-appearance: none;
+  appearance: none;
+  width: var(--scrollbar-size);
+  height: var(--scrollbar-size);
+}
+
+.scroll-area::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+  border-radius: 999px;
+}
+
+.scroll-area::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius: 999px;
+  border: 2px solid var(--scrollbar-track);
+  min-height: 2.5rem;
+}
+
+.scroll-area::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb-hover);
+}
+
+.scroll-area::-webkit-scrollbar-corner {
+  background: var(--scrollbar-track);
 }
 
 @layer base {

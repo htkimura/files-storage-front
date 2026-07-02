@@ -72,7 +72,11 @@ export const Images = () => {
   const { setContent } = useOverlay()
 
   useEffect(() => {
-    if (!fileIdToPreview) return setContent(undefined)
+    if (!fileIdToPreview) {
+      setContent(undefined)
+      return
+    }
+
     setContent(
       <ImagePreviewer
         files={files}
@@ -83,6 +87,8 @@ export const Images = () => {
         setFileIdToPreview={setFileIdToPreview}
       />,
     )
+
+    return () => setContent(undefined)
   }, [fileIdToPreview, setContent, fetchedFiles, files])
 
   return (
