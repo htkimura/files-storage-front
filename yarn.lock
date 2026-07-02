@@ -404,10 +404,10 @@
   resolved "https://registry.yarnpkg.com/@hookform/resolvers/-/resolvers-3.9.1.tgz#a23883c40bfd449cb6c6ab5a0fa0729184c950ff"
   integrity sha512-ud2HqmGBM0P0IABqoskKWI6PEf6ZDDBZkFqe2Vnl+mTHCEHzr3ISjjZyCwTjC/qpL25JC9aIDkloQejvMeq0ug==
 
-"@htkimura/files-storage-backend.rest-client@^0.0.33":
-  version "0.0.33"
-  resolved "https://registry.yarnpkg.com/@htkimura/files-storage-backend.rest-client/-/files-storage-backend.rest-client-0.0.33.tgz#f417f0e5ca3fb640185b22a9d3d184a563cc50eb"
-  integrity sha512-PTuNapblYfxEor/vpsyZPgc7KkNH9zzJmCDsPLjWVNqk6z/6tmRffR0pxeAyde2cEiYtg/mhpRt7PbklbWrm4A==
+"@htkimura/files-storage-backend.rest-client@^0.0.34":
+  version "0.0.34"
+  resolved "https://registry.yarnpkg.com/@htkimura/files-storage-backend.rest-client/-/files-storage-backend.rest-client-0.0.34.tgz#2ea661e62d42318135e780a6c52a9a048b995e1d"
+  integrity sha512-QadbQnLS7NyEDLklHrNHqkWtVUEvXUtVFdS0bqdgjceezexRPWTZUUsCEMvlQweiQnVuva+TGJ/dGtxJGdHzVw==
   dependencies:
     axios "^1.7.9"
 
