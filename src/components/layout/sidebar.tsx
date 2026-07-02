@@ -9,8 +9,8 @@ import {
   SidebarProvider,
   Sidebar as SidebarUI,
 } from '../ui/sidebar'
-import { FILES_PAGE_ROUTE, IMAGES_PAGE_ROUTE } from '@/routes'
-import { Files, Image, LogOut, LucideIcon } from 'lucide-react'
+import { FILES_PAGE_ROUTE, HOME_PAGE_ROUTE, IMAGES_PAGE_ROUTE } from '@/routes'
+import { Files, FolderOpen, Image, LogOut, LucideIcon } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
 import { useUser } from '@/contexts'
 import { FC, PropsWithChildren } from 'react'
@@ -24,6 +24,11 @@ interface SidebarItemConfig {
 }
 
 const navItems: SidebarItemConfig[] = [
+  {
+    label: 'My Drive',
+    icon: FolderOpen,
+    href: HOME_PAGE_ROUTE,
+  },
   {
     label: 'Files',
     icon: Files,
@@ -40,8 +45,10 @@ const SidebarNavItem = ({ item }: { item: SidebarItemConfig }) => {
   const location = useLocation()
   const isActive =
     !!item.href &&
-    (location.pathname === item.href ||
-      location.pathname.startsWith(`${item.href}/`))
+    (item.href === HOME_PAGE_ROUTE
+      ? location.pathname === HOME_PAGE_ROUTE
+      : location.pathname === item.href ||
+        location.pathname.startsWith(`${item.href}/`))
 
   if (item.onClick) {
     return (

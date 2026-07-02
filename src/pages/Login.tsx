@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useUser } from '@/contexts/user-context'
 import { useToast } from '@/hooks/use-toast'
-import { FILES_PAGE_ROUTE } from '@/routes'
+import { HOME_PAGE_ROUTE } from '@/routes'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -39,7 +39,7 @@ export const Login = () => {
       setUser(user)
       setToken(token)
       setRefreshToken(refreshToken)
-      navigate(FILES_PAGE_ROUTE)
+      navigate(HOME_PAGE_ROUTE)
     } catch (error: unknown) {
       const errorMessage =
         (error as { response?: { data?: { message?: string } } })?.response
