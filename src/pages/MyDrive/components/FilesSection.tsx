@@ -13,6 +13,7 @@ interface FilesSectionProps {
   observerRef: RefObject<HTMLDivElement>
   onDownload: (fileId: string) => void
   onDelete: (file: FileWithPresignedThumbnailUrl) => void
+  movingFileId?: string | null
 }
 
 export const FilesSection = ({
@@ -23,6 +24,7 @@ export const FilesSection = ({
   observerRef,
   onDownload,
   onDelete,
+  movingFileId = null,
 }: FilesSectionProps) => {
   return (
     <section className="flex flex-col gap-3">
@@ -41,6 +43,7 @@ export const FilesSection = ({
             file={file}
             onDownload={onDownload}
             onDelete={onDelete}
+            isMoving={movingFileId === file.id}
           />
         ))}
         {isInitialLoading && files.length === 0 && (

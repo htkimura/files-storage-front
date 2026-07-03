@@ -33,6 +33,7 @@ export const DriveItemActions = ({
             className,
           )}
           onClick={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
         >
           <EllipsisVerticalIcon className="size-4" />
           <span className="sr-only">Actions for {name}</span>

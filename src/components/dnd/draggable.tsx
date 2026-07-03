@@ -1,22 +1,53 @@
-import { ReactNode, FC } from 'react'
 import { useDraggable } from '@dnd-kit/core'
+import { CSS } from '@dnd-kit/utilities'
+import { cn } from '@/lib/utils'
+import { type FC, type ReactNode } from 'react'
 
-export const Draggable: FC<{ id: string; children: ReactNode }> = ({
+interface DraggableProps {
+  id: string
+  children: ReactNode
+  className?: string
+  disabled?: boolean
+  useDragOverlay?: boolean
+}
+
+export const Draggable: FC<DraggableProps> = ({
   children,
   id,
+  className,
+  disabled = false,
+  useDragOverlay = false,
 }) => {
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({
-    id,
-  })
+  const { attributes, listeners, setNodeRef, transform, isDragging } =
+    useDraggable({
+      id,
+      disabled,
+    })
+
   const style = transform
     ? {
-        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+        transform: useDragOverlay
+          ? undefined
+          : CSS.Translate.toString(transform),
+        opacity: useDragOverlay && isDragging ? 0.4 : undefined,
       }
-    : undefined
+    : useDragOverlay && isDragging
+      ? { opacity: 0.4 }
+      : undefined
 
   return (
-    <button ref={setNodeRef} style={style} {...listeners} {...attributes}>
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        'touch-none cursor-grab active:cursor-grabbing',
+        disabled && 'cursor-default',
+        className,
+      )}
+      {...listeners}
+      {...attributes}
+    >
       {children}
-    </button>
+    </div>
   )
 }

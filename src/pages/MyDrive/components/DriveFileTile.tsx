@@ -1,31 +1,38 @@
+import { Draggable } from '@/components/dnd/draggable'
 import { cn } from '@/lib/utils'
 import type { FileWithPresignedThumbnailUrl } from '@htkimura/files-storage-backend.rest-client'
 import { FileIcon } from 'lucide-react'
 import { useState } from 'react'
+import { driveFileDndId } from './dnd'
 import { DriveItemActions } from './DriveItemActions'
 
 interface DriveFileTileProps {
   file: FileWithPresignedThumbnailUrl
   onDownload: (fileId: string) => void
   onDelete: (file: FileWithPresignedThumbnailUrl) => void
+  isMoving?: boolean
 }
 
 export const DriveFileTile = ({
   file,
   onDownload,
   onDelete,
+  isMoving = false,
 }: DriveFileTileProps) => {
   const [thumbFailed, setThumbFailed] = useState(false)
   const url = file.presignedThumbnailUrl
   const showImage = Boolean(url) && !thumbFailed
 
   return (
-    <div
+    <Draggable
+      id={driveFileDndId(file.id)}
+      disabled={isMoving}
+      useDragOverlay
       className={cn(
         'group flex flex-col gap-2 rounded-xl border border-border/80 bg-card p-2.5 shadow-sm',
         'transition-shadow hover:border-primary/20 hover:shadow-md',
+        isMoving && 'pointer-events-none opacity-50',
       )}
-      title={file.name}
     >
       <div className="flex aspect-square w-full items-center justify-center overflow-hidden rounded-lg bg-muted/60">
         {showImage ? (
@@ -33,6 +40,7 @@ export const DriveFileTile = ({
             src={url}
             alt=""
             className="h-full w-full object-cover"
+            draggable={false}
             onError={() => setThumbFailed(true)}
           />
         ) : (
@@ -54,6 +62,6 @@ export const DriveFileTile = ({
           className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100"
         />
       </div>
-    </div>
+    </Draggable>
   )
 }
