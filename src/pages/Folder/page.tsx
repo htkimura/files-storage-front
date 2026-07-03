@@ -34,9 +34,15 @@ export const FolderPage = () => {
     : null
 
   const breadcrumbs = [
-    { label: 'My Drive', to: HOME_PAGE_ROUTE },
+    { label: 'My Drive', to: HOME_PAGE_ROUTE, dropFolderId: null },
     ...(parentFolder
-      ? [{ label: parentFolder.name, to: getFolderPageRoute(parentFolder.id) }]
+      ? [
+          {
+            label: parentFolder.name,
+            to: getFolderPageRoute(parentFolder.id),
+            dropFolderId: parentFolder.id,
+          },
+        ]
       : []),
   ]
 
@@ -44,7 +50,7 @@ export const FolderPage = () => {
     <DrivePageContent
       folderId={folderId}
       title={currentFolder?.name ?? 'Folder'}
-      description="Folders and files inside this folder. Drag files onto a folder to move them."
+      description="Folders and files inside this folder. Drag files onto a folder or breadcrumb to move them."
       breadcrumbs={breadcrumbs}
     />
   )

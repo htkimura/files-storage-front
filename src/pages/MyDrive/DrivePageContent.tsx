@@ -1,4 +1,5 @@
 import { Layout } from '@/components/layout/layout'
+import { cn } from '@/lib/utils'
 import {
   type FileWithPresignedThumbnailUrl,
   useDeleteBulkFilesByIds,
@@ -16,10 +17,13 @@ import {
 } from '@dnd-kit/core'
 import { ChevronRightIcon } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { DeleteFileDialog } from './components/DeleteFileDialog'
-import { parseDriveFileDndId, parseDriveFolderDndId } from './components/dnd'
+import { DriveBreadcrumbItem } from './components/DriveBreadcrumbItem'
+import {
+  parseDriveDropTargetFolderId,
+  parseDriveFileDndId,
+} from './components/dnd'
 import { DriveFileTileDragPreview } from './components/DriveFileTileDragPreview'
 import { FilesSection } from './components/FilesSection'
 import { FoldersSection } from './components/FoldersSection'
@@ -28,6 +32,7 @@ import { useDriveData } from './hooks/useDriveData'
 export interface DriveBreadcrumb {
   label: string
   to: string
+  dropFolderId: string | null
 }
 
 interface DrivePageContentProps {
@@ -154,16 +159,26 @@ export const DrivePageContent = ({
       setActiveFile(null)
 
       const fileId = parseDriveFileDndId(event.active.id)
-      const targetFolderId = event.over
-        ? parseDriveFolderDndId(event.over.id)
-        : null
+      const overId = event.over?.id
 
-      if (!fileId || !targetFolderId || movingFileId) return
+      if (!fileId || overId === undefined || movingFileId) return
 
-      const folder = folders.find((item) => item.id === targetFolderId)
+      const targetFolderId = parseDriveDropTargetFolderId(overId)
+      if (targetFolderId === undefined) return
+
       const file = allFiles.find((item) => item.id === fileId)
+      if (!file) return
 
-      if (!folder || !file) return
+      const currentFolderId = file.folderId ?? null
+      if (currentFolderId === targetFolderId) return
+
+      const destinationName =
+        targetFolderId === null
+          ? 'My Drive'
+          : (folders.find((item) => item.id === targetFolderId)?.name ??
+            breadcrumbs.find((item) => item.dropFolderId === targetFolderId)
+              ?.label ??
+            'folder')
 
       setMovingFileId(fileId)
 
@@ -172,7 +187,7 @@ export const DrivePageContent = ({
         {
           onSuccess: () => {
             setAllFiles((prev) => prev.filter((item) => item.id !== fileId))
-            toast.success(`Moved "${file.name}" to "${folder.name}"`)
+            toast.success(`Moved "${file.name}" to "${destinationName}"`)
           },
           onError: (error) => {
             const message =
@@ -186,7 +201,14 @@ export const DrivePageContent = ({
         },
       )
     },
-    [allFiles, folders, moveFileToFolder, movingFileId, setAllFiles],
+    [
+      allFiles,
+      breadcrumbs,
+      folders,
+      moveFileToFolder,
+      movingFileId,
+      setAllFiles,
+    ],
   )
 
   const handleDragCancel = useCallback(() => {
@@ -206,19 +228,27 @@ export const DrivePageContent = ({
             {breadcrumbs.length > 0 && (
               <nav
                 aria-label="Breadcrumb"
-                className="mb-2 flex flex-wrap items-center gap-1 text-sm text-muted-foreground"
+                className={cn(
+                  'mb-2 flex flex-wrap items-center gap-1 text-sm text-muted-foreground transition-colors',
+                  activeFile && 'rounded-lg bg-muted/40 px-2 py-1.5',
+                )}
               >
                 {breadcrumbs.map((crumb, index) => (
                   <span key={crumb.to} className="flex items-center gap-1">
                     {index > 0 && (
-                      <ChevronRightIcon className="size-3.5 shrink-0" />
+                      <ChevronRightIcon
+                        className={cn(
+                          'size-3.5 shrink-0',
+                          activeFile && 'text-primary/50',
+                        )}
+                      />
                     )}
-                    <Link
+                    <DriveBreadcrumbItem
+                      label={crumb.label}
                       to={crumb.to}
-                      className="transition-colors hover:text-foreground"
-                    >
-                      {crumb.label}
-                    </Link>
+                      dropFolderId={crumb.dropFolderId}
+                      isDraggingFile={Boolean(activeFile)}
+                    />
                   </span>
                 ))}
               </nav>
