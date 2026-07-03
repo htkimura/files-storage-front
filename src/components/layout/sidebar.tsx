@@ -46,7 +46,8 @@ const SidebarNavItem = ({ item }: { item: SidebarItemConfig }) => {
   const isActive =
     !!item.href &&
     (item.href === HOME_PAGE_ROUTE
-      ? location.pathname === HOME_PAGE_ROUTE
+      ? location.pathname === HOME_PAGE_ROUTE ||
+        location.pathname.startsWith('/folder/')
       : location.pathname === item.href ||
         location.pathname.startsWith(`${item.href}/`))
 

@@ -2,6 +2,7 @@ import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { NotFound } from './pages/NotFound'
 import {
   FILES_PAGE_ROUTE,
+  FOLDER_PAGE_ROUTE,
   HOME_PAGE_ROUTE,
   IMAGES_PAGE_ROUTE,
   LOGIN_PAGE_ROUTE,
@@ -13,6 +14,7 @@ import './css/variables.css'
 import { useUser } from './contexts'
 import { Images } from './pages/Images/page'
 import { Files } from './pages/Files'
+import { FolderPage } from './pages/Folder/page'
 import { MyDrive } from './pages/MyDrive/page'
 
 const AuthRoute = () => {
@@ -31,6 +33,7 @@ function App() {
       <Route path={LOGIN_PAGE_ROUTE} element={<Login />} />
       <Route element={<AuthRoute />}>
         <Route path={HOME_PAGE_ROUTE} element={<MyDrive />} />
+        <Route path={FOLDER_PAGE_ROUTE} element={<FolderPage />} />
         <Route path={FILES_PAGE_ROUTE} element={<Files />} />
         <Route path={IMAGES_PAGE_ROUTE} element={<Images />} />
       </Route>

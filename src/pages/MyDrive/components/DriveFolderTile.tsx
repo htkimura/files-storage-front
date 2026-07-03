@@ -1,7 +1,9 @@
 import { Droppable } from '@/components/dnd/droppable'
 import { cn } from '@/lib/utils'
+import { getFolderPageRoute } from '@/routes'
 import type { Folder } from '@htkimura/files-storage-backend.rest-client'
 import { FolderIcon } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { driveFolderDndId } from './dnd'
 
 interface DriveFolderTileProps {
@@ -18,14 +20,20 @@ export const DriveFolderTile = ({ folder }: DriveFolderTileProps) => {
       )}
       activeClassName="bg-primary/10 ring-2 ring-primary ring-offset-2 ring-offset-card"
     >
-      <FolderIcon
-        className="size-5 shrink-0 text-muted-foreground"
-        strokeWidth={1.5}
-        aria-hidden
-      />
-      <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
-        {folder.name}
-      </span>
+      <Link
+        to={getFolderPageRoute(folder.id)}
+        className="flex min-w-0 flex-1 items-center gap-2 no-underline hover:no-underline"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <FolderIcon
+          className="size-5 shrink-0 text-muted-foreground"
+          strokeWidth={1.5}
+          aria-hidden
+        />
+        <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
+          {folder.name}
+        </span>
+      </Link>
     </Droppable>
   )
 }
