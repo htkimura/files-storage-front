@@ -1,7 +1,8 @@
 import pluralize from 'pluralize-esm'
 import { Layout } from '@/components/layout/layout'
-import { config, queryDefaultOptions } from '@/config'
+import { queryDefaultOptions } from '@/config'
 import { useOverlay, useUser } from '@/contexts'
+import { useFileUpload } from '@/hooks/useFileUpload'
 import {
   File,
   useDeleteBulkFilesByIds,
@@ -10,12 +11,7 @@ import {
   useRenameFile,
 } from '@htkimura/files-storage-backend.rest-client'
 import type { AxiosRequestConfig } from 'axios'
-import {
-  CloudUploadIcon,
-  Loader2,
-  TrashIcon,
-} from 'lucide-react'
-import { useDropzone } from 'react-dropzone'
+import { Loader2, TrashIcon } from 'lucide-react'
 import {
   Table,
   TableBody,
@@ -25,7 +21,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { filesize } from 'filesize'
-import { FC, useEffect, useRef, useState } from 'react'
+import { FC, useEffect, useState } from 'react'
 import {
   Dialog,
   DialogClose,
@@ -51,42 +47,15 @@ import {
 } from '@/components/ui/pagination'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Skeleton } from '@/components/ui/skeleton'
-import classNames from 'classnames'
-import { useLottie } from 'lottie-react'
-import cloudUploadingAnimation from '@/animations/cloud-uploading.json'
 import { Button } from '@/components/ui/button'
-import {
-  UploadProgressPopup,
-  type UploadRowState,
-} from '@/components/upload/UploadProgressPopup'
-import { uploadFileToStorage } from '@/lib/chunked-upload'
+import { FileUploadDropzone } from '@/components/upload/FileUploadDropzone'
+import { UploadProgressPopup } from '@/components/upload/UploadProgressPopup'
 import toast from 'react-hot-toast'
 import { FileItemActions } from '@/components/FileItemActions'
 import { RenameFileDialog } from '@/pages/MyDrive/components/RenameFileDialog'
 
-const DragUploadAnimation = () => {
-  const { View } = useLottie({
-    animationData: cloudUploadingAnimation,
-    loop: true,
-    autoplay: true,
-    style: {
-      height: 130,
-      width: '100%',
-      maxWidth: 220,
-      padding: 0,
-      margin: 0,
-    },
-  })
-
-  return <>{View}</>
-}
-
 export const Files = () => {
   const { token } = useUser()
-
-  const [uploadItems, setUploadItems] = useState<UploadRowState[]>([])
-  const [uploadCollapsed, setUploadCollapsed] = useState(false)
-  const controllersRef = useRef(new Map<string, AbortController>())
 
   const clientAxiosConfig = {
     ...queryDefaultOptions.axios,
@@ -109,97 +78,19 @@ export const Files = () => {
     },
   )
 
-  const handleCancelAllUploads = () => {
-    controllersRef.current.forEach((ac) => ac.abort())
-    controllersRef.current.clear()
-    setUploadItems((prev) =>
-      prev.map((i) =>
-        i.status === 'uploading' || i.status === 'queued'
-          ? { ...i, status: 'cancelled' }
-          : i,
-      ),
-    )
-  }
-
-  const handleDismissUploadPanel = () => {
-    controllersRef.current.forEach((ac) => ac.abort())
-    controllersRef.current.clear()
-    setUploadItems([])
-  }
-
-  const handleRemoveUploadItem = (id: string) => {
-    setUploadItems((prev) => prev.filter((row) => row.id !== id))
-  }
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    noKeyboard: true,
-    onDrop: (acceptedFiles) => {
-      if (acceptedFiles.length === 0) return
-      const authHeaders = { Authorization: `Bearer ${token}` }
-
-      const pairs = acceptedFiles.map((file) => ({
-        file,
-        row: {
-          id: crypto.randomUUID(),
-          name: file.name,
-          size: file.size,
-          progress: 0,
-          status: 'uploading' as const,
-        },
-      }))
-
-      setUploadCollapsed(false)
-      setUploadItems((prev) => [...prev, ...pairs.map((p) => p.row)])
-
-      for (const { file, row } of pairs) {
-        const ac = new AbortController()
-        controllersRef.current.set(row.id, ac)
-        void (async () => {
-          try {
-            await uploadFileToStorage(file, config.apiBaseUrl, authHeaders, {
-              signal: ac.signal,
-              onProgress: (p) =>
-                setUploadItems((prev) =>
-                  prev.map((i) =>
-                    i.id === row.id ? { ...i, progress: p } : i,
-                  ),
-                ),
-            })
-            setUploadItems((prev) =>
-              prev.map((i) =>
-                i.id === row.id
-                  ? { ...i, status: 'complete', progress: 100 }
-                  : i,
-              ),
-            )
-            await refetch()
-            toast.success(`Uploaded ${row.name}`)
-          } catch (error) {
-            if (ac.signal.aborted) {
-              setUploadItems((prev) =>
-                prev.map((i) =>
-                  i.id === row.id ? { ...i, status: 'cancelled' } : i,
-                ),
-              )
-            } else {
-              console.error('[upload]', error)
-              const message =
-                error instanceof Error ? error.message : 'Upload failed'
-              setUploadItems((prev) =>
-                prev.map((i) =>
-                  i.id === row.id
-                    ? { ...i, status: 'error', errorMessage: message }
-                    : i,
-                ),
-              )
-              toast.error(message)
-            }
-          } finally {
-            controllersRef.current.delete(row.id)
-          }
-        })()
-      }
-    },
+  const {
+    uploadItems,
+    uploadCollapsed,
+    setUploadCollapsed,
+    getRootProps,
+    getInputProps,
+    isDragActive,
+    handleCancelAllUploads,
+    handleDismissUploadPanel,
+    handleRemoveUploadItem,
+  } = useFileUpload({
+    token,
+    onUploadComplete: refetch,
   })
 
   const { data: filesData } = filesDataRaw || {}
@@ -265,38 +156,11 @@ export const Files = () => {
           </p>
         </div>
 
-        <button
-          type="button"
-          className={classNames(
-            'group flex max-w-xl flex-col items-center justify-center rounded-2xl border-2 border-dashed transition-all duration-200',
-            'border-muted-foreground/20 bg-muted/30 text-muted-foreground',
-            'hover:border-primary/35 hover:bg-primary/[0.04] hover:text-foreground',
-            isDragActive
-              ? 'min-h-44 border-primary bg-primary/[0.06] py-5 text-foreground'
-              : 'h-44 px-6 py-8',
-          )}
-          {...getRootProps()}
-        >
-          <input {...getInputProps()} />
-          {isDragActive ? (
-            <>
-              <DragUploadAnimation />
-              <span className="mt-2 text-sm font-medium text-foreground">
-                Drop files to upload
-              </span>
-            </>
-          ) : (
-            <>
-              <CloudUploadIcon className="mb-3 h-10 w-10 opacity-70 transition-opacity group-hover:opacity-100" />
-              <span className="text-center text-sm font-medium text-foreground">
-                Drag & drop files here
-              </span>
-              <span className="mt-1 text-center text-xs text-muted-foreground">
-                or click to browse
-              </span>
-            </>
-          )}
-        </button>
+        <FileUploadDropzone
+          getRootProps={getRootProps}
+          getInputProps={getInputProps}
+          isDragActive={isDragActive}
+        />
 
         <UploadProgressPopup
           items={uploadItems}

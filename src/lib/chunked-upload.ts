@@ -64,6 +64,7 @@ async function uploadSinglePut(
   )
 
   report(100)
+  return fileId
 }
 
 async function uploadMultipart(
@@ -160,6 +161,7 @@ async function uploadMultipart(
     )
 
     report(100)
+    return fileId
   } catch (err) {
     if (createdFileId && !signal?.aborted) {
       try {
@@ -182,10 +184,9 @@ export async function uploadFileToStorage(
   apiBaseUrl: string,
   headers: Record<string, string>,
   options?: UploadFileOptions,
-) {
+): Promise<string> {
   if (file.size > MULTIPART_THRESHOLD_BYTES) {
-    await uploadMultipart(file, apiBaseUrl, headers, options)
-  } else {
-    await uploadSinglePut(file, apiBaseUrl, headers, options)
+    return uploadMultipart(file, apiBaseUrl, headers, options)
   }
+  return uploadSinglePut(file, apiBaseUrl, headers, options)
 }

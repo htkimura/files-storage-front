@@ -9,7 +9,7 @@ export const FolderPage = () => {
   const { folderId } = useParams<{ folderId: string }>()
   const { token } = useUser()
 
-  const { data: foldersRes, isLoading } = useListMyFolders({
+  const { data: foldersRes, isLoading } = useListMyFolders(undefined, {
     axios: {
       ...queryDefaultOptions.axios,
       headers: {

@@ -1,4 +1,8 @@
 import { Layout } from '@/components/layout/layout'
+import { FileUploadDropzone } from '@/components/upload/FileUploadDropzone'
+import { UploadProgressPopup } from '@/components/upload/UploadProgressPopup'
+import { useUser } from '@/contexts'
+import { useFileUpload } from '@/hooks/useFileUpload'
 import { cn } from '@/lib/utils'
 import {
   type FileWithPresignedThumbnailUrl,
@@ -58,6 +62,7 @@ export const DrivePageContent = ({
   description,
   breadcrumbs = [],
 }: DrivePageContentProps) => {
+  const { token } = useUser()
   const {
     clientAxiosConfig,
     folders,
@@ -69,7 +74,24 @@ export const DrivePageContent = ({
     filesFetching,
     hasMore,
     observerRef,
+    refreshFiles,
   } = useDriveData(folderId)
+
+  const {
+    uploadItems,
+    uploadCollapsed,
+    setUploadCollapsed,
+    getRootProps,
+    getInputProps,
+    isDragActive: isUploadDragActive,
+    handleCancelAllUploads,
+    handleDismissUploadPanel,
+    handleRemoveUploadItem,
+  } = useFileUpload({
+    token,
+    folderId,
+    onUploadComplete: refreshFiles,
+  })
 
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null)
   const { data: fileData } = useGetFileById(selectedFileId!, {
@@ -379,6 +401,21 @@ export const DrivePageContent = ({
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">{description}</p>
           </div>
+
+          <FileUploadDropzone
+            getRootProps={getRootProps}
+            getInputProps={getInputProps}
+            isDragActive={isUploadDragActive}
+          />
+
+          <UploadProgressPopup
+            items={uploadItems}
+            collapsed={uploadCollapsed}
+            onToggleCollapse={() => setUploadCollapsed((c) => !c)}
+            onDismiss={handleDismissUploadPanel}
+            onCancelAll={handleCancelAllUploads}
+            onRemoveItem={handleRemoveUploadItem}
+          />
 
           <FoldersSection
             folders={folders}

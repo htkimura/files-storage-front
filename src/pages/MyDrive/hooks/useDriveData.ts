@@ -5,7 +5,7 @@ import {
   useListMyFolders,
   useMyFiles,
 } from '@htkimura/files-storage-backend.rest-client'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 const PAGE_SIZE = 20
 
@@ -20,17 +20,17 @@ export const useDriveData = (folderId: string | null) => {
 
   const foldersQueryParams = { parentFolderId: folderId ?? null }
 
-  const { data: foldersRes, isLoading: foldersLoading } = useListMyFolders({
-    axios: {
-      ...clientAxiosConfig,
-      params: foldersQueryParams,
+  const { data: foldersRes, isLoading: foldersLoading } = useListMyFolders(
+    foldersQueryParams,
+    {
+      axios: clientAxiosConfig,
+      query: {
+        queryKey: ['/folders', foldersQueryParams],
+      },
     },
-    query: {
-      queryKey: ['/folders', foldersQueryParams],
-    },
-  })
+  )
 
-  const queryFolders = Array.isArray(foldersRes?.data) ? foldersRes.data : []
+  const queryFolders = Array.isArray(foldersRes?.data) ? foldersRes!.data : []
   const [hiddenFolderIds, setHiddenFolderIds] = useState<string[]>([])
   const [page, setPage] = useState(1)
   const [allFiles, setAllFiles] = useState<FileWithPresignedThumbnailUrl[]>([])
@@ -55,6 +55,7 @@ export const useDriveData = (folderId: string | null) => {
     data: filesDataRaw,
     isLoading: filesInitialLoading,
     isFetching: filesFetching,
+    refetch: refetchFiles,
   } = useMyFiles(
     { page, size: PAGE_SIZE, folderId },
     {
@@ -104,6 +105,11 @@ export const useDriveData = (folderId: string | null) => {
     }
   }, [hasMore, filesFetching])
 
+  const refreshFiles = useCallback(async () => {
+    setPage(1)
+    await refetchFiles()
+  }, [refetchFiles])
+
   return {
     clientAxiosConfig,
     folders,
@@ -115,5 +121,6 @@ export const useDriveData = (folderId: string | null) => {
     filesFetching,
     hasMore,
     observerRef,
+    refreshFiles,
   }
 }
