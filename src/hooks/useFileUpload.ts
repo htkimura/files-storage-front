@@ -1,4 +1,5 @@
 import { config, queryDefaultOptions } from '@/config'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { uploadFileToStorage } from '@/lib/chunked-upload'
 import { moveFileToFolder } from '@htkimura/files-storage-backend.rest-client'
 import { useCallback, useRef, useState } from 'react'
@@ -112,8 +113,7 @@ export const useFileUpload = ({
               )
             } else {
               console.error('[upload]', error)
-              const message =
-                error instanceof Error ? error.message : 'Upload failed'
+              const message = getApiErrorMessage(error, 'Upload failed')
               setUploadItems((prev) =>
                 prev.map((item) =>
                   item.id === row.id

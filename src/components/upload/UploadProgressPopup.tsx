@@ -279,8 +279,11 @@ export const UploadProgressPopup: FC<UploadProgressPopupProps> = ({
                     {row.status === 'uploading' && 'Uploading…'}
                     {row.status === 'queued' && 'Waiting…'}
                     {row.status === 'cancelled' && 'Upload canceled'}
-                    {row.status === 'error' &&
-                      (row.errorMessage || 'Upload failed')}
+                    {row.status === 'error' && (
+                      <span title={row.errorMessage}>
+                        {row.errorMessage || 'Upload failed'}
+                      </span>
+                    )}
                   </p>
                 </div>
                 <div className="inline-flex h-8 w-8 shrink-0 items-center justify-center self-center">

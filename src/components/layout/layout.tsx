@@ -15,10 +15,10 @@ export const Layout: FC<Props> = ({ children, className }) => {
   return (
     <>
       <Toaster
-        position="top-center"
+        position="bottom-center"
         toastOptions={{
           className:
-            '!rounded-lg !border !border-border !bg-card !text-card-foreground !shadow-lg',
+            '!rounded-lg !border !border-border !bg-card !text-card-foreground !text-sm !leading-snug !shadow-lg',
         }}
       />
       {content && content}
