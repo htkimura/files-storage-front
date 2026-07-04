@@ -97,7 +97,7 @@ export const Sidebar: FC<PropsWithChildren> = ({ children }) => {
   const { logout } = useUser()
 
   return (
-    <SidebarProvider>
+    <SidebarProvider className="h-svh overflow-hidden">
       <SidebarUI
         collapsible="icon"
         className="border-r border-sidebar-border bg-sidebar text-sidebar-foreground"

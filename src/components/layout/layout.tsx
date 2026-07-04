@@ -4,6 +4,7 @@ import { Sidebar } from './sidebar'
 import { Toaster } from 'react-hot-toast'
 import { useOverlay } from '@/contexts'
 import { cn } from '@/lib/utils'
+import { SidebarInset } from '../ui/sidebar'
 
 interface Props extends PropsWithChildren {
   className?: string
@@ -22,7 +23,7 @@ export const Layout: FC<Props> = ({ children, className }) => {
       />
       {content && content}
       <Sidebar>
-        <div className="flex h-svh w-full flex-col overflow-hidden bg-transparent">
+        <SidebarInset className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-transparent">
           <Header />
           <main
             className={cn(
@@ -32,7 +33,7 @@ export const Layout: FC<Props> = ({ children, className }) => {
           >
             {children}
           </main>
-        </div>
+        </SidebarInset>
       </Sidebar>
     </>
   )

@@ -51,7 +51,7 @@ export const Login = () => {
   }
 
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center bg-background px-4 py-12">
+    <div className="flex h-svh flex-col items-center justify-center overflow-y-auto bg-background px-4 py-12">
       <div
         className="pointer-events-none fixed inset-0 -z-10 opacity-40"
         aria-hidden
