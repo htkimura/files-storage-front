@@ -15,6 +15,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
 import { useUser } from '@/contexts'
 import { FC, PropsWithChildren } from 'react'
 import { cn } from '@/lib/utils'
+import { StorageConsumption } from './storage-consumption'
 
 interface SidebarItemConfig {
   label: string
@@ -120,12 +121,13 @@ export const Sidebar: FC<PropsWithChildren> = ({ children }) => {
             />
           </div>
         </SidebarHeader>
-        <SidebarContent className="gap-1 px-2 py-4">
+        <SidebarContent className="flex flex-col gap-1 px-2 py-4">
           <SidebarMenu>
             {navItems.map((item) => (
               <SidebarNavItem key={item.href} item={item} />
             ))}
           </SidebarMenu>
+          <StorageConsumption />
         </SidebarContent>
         <SidebarFooter className="border-t border-sidebar-border/80 p-2">
           <SidebarMenu>
