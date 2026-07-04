@@ -1,6 +1,9 @@
 import { Layout } from '@/components/layout/layout'
+import { FilePreviewer } from '@/components/preview/FilePreviewer'
+import { FilePreviewStripItem } from '@/components/preview/FilePreviewStripItem'
 import { UploadProgressPopup } from '@/components/upload/UploadProgressPopup'
-import { useUser } from '@/contexts'
+import { useOverlay, useUser } from '@/contexts'
+import { useFilePreview } from '@/hooks/useFilePreview'
 import { useFileUpload } from '@/hooks/useFileUpload'
 import { cn } from '@/lib/utils'
 import {
@@ -62,6 +65,7 @@ export const DrivePageContent = ({
   breadcrumbs = [],
 }: DrivePageContentProps) => {
   const { token } = useUser()
+  const { setContent } = useOverlay()
   const {
     clientAxiosConfig,
     folders,
@@ -94,6 +98,53 @@ export const DrivePageContent = ({
   })
 
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null)
+
+  const {
+    fileIdToPreview,
+    activeFile,
+    isLoadingActiveFile,
+    openPreview,
+    closePreview,
+  } = useFilePreview()
+
+  useEffect(() => {
+    if (!fileIdToPreview) {
+      setContent(undefined)
+      return
+    }
+
+    setContent(
+      <FilePreviewer
+        key={fileIdToPreview}
+        file={activeFile ?? null}
+        isLoading={isLoadingActiveFile}
+        onClose={closePreview}
+        strip={
+          <div className="flex gap-2 overflow-x-auto p-2 max-h-[15vh]">
+            {allFiles.map((item) => (
+              <FilePreviewStripItem
+                key={item.id}
+                file={item}
+                onSelect={openPreview}
+                highlight={item.id === fileIdToPreview}
+              />
+            ))}
+          </div>
+        }
+      />,
+    )
+
+    return () => setContent(undefined)
+  }, [
+    activeFile,
+    allFiles,
+    closePreview,
+    fileIdToPreview,
+    isLoadingActiveFile,
+    openPreview,
+    setContent,
+  ])
+
   const { data: fileData } = useGetFileById(selectedFileId!, {
     query: {
       enabled: !!selectedFileId,
@@ -443,6 +494,7 @@ export const DrivePageContent = ({
             hasMore={hasMore}
             observerRef={observerRef}
             onDownload={handleDownload}
+            onPreview={openPreview}
             onRename={handleRenameRequest}
             onDelete={handleDeleteRequest}
             movingFileId={movingFileId}

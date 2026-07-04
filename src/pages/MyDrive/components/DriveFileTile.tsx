@@ -9,6 +9,7 @@ import { FileItemActions } from '@/components/FileItemActions'
 interface DriveFileTileProps {
   file: FileWithPresignedThumbnailUrl
   onDownload: (fileId: string) => void
+  onPreview: (fileId: string) => void
   onRename: (file: FileWithPresignedThumbnailUrl) => void
   onDelete: (file: FileWithPresignedThumbnailUrl) => void
   isMoving?: boolean
@@ -17,6 +18,7 @@ interface DriveFileTileProps {
 export const DriveFileTile = ({
   file,
   onDownload,
+  onPreview,
   onRename,
   onDelete,
   isMoving = false,
@@ -36,7 +38,11 @@ export const DriveFileTile = ({
         isMoving && 'pointer-events-none opacity-50',
       )}
     >
-      <div className="flex aspect-square w-full items-center justify-center overflow-hidden rounded-lg bg-muted/60">
+      <button
+        type="button"
+        onClick={() => onPreview(file.id)}
+        className="flex aspect-square w-full items-center justify-center overflow-hidden rounded-lg bg-muted/60"
+      >
         {showImage ? (
           <img
             src={url}
@@ -52,7 +58,7 @@ export const DriveFileTile = ({
             aria-hidden
           />
         )}
-      </div>
+      </button>
       <div className="flex min-w-0 items-center gap-0.5">
         <p className="min-w-0 flex-1 truncate text-xs font-medium text-foreground">
           {file.name}

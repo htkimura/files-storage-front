@@ -1,14 +1,15 @@
+import { FilePreviewer } from '@/components/preview/FilePreviewer'
+import { useFilePreview } from '@/hooks/useFilePreview'
+import type { FetchedPreviewFiles } from '@/lib/filePreview'
 import { Layout } from '@/components/layout/layout'
 import { queryDefaultOptions } from '@/config'
 import { useOverlay, useUser } from '@/contexts'
-import {
-  FileWithPresignedUrl,
-  useMyFiles,
-} from '@htkimura/files-storage-backend.rest-client'
+import { useMyFiles } from '@htkimura/files-storage-backend.rest-client'
 import { useEffect, useRef, useState } from 'react'
 import ImageThumbnail from './components/ImageThumbnail'
-import ImagePreviewer, { FetchedFiles } from './components/ImagePreviewer'
 import { Skeleton } from '@/components/ui/skeleton'
+
+export type { FetchedPreviewFiles as FetchedFiles }
 
 export const Images = () => {
   const { token } = useUser()
@@ -35,17 +36,13 @@ export const Images = () => {
   const files = filesData?.data || []
   const hasMore = filesData?.hasMore || false
 
-  const [fileIdToPreview, setFileIdToPreview] = useState<string | null>(null)
-  const [fetchedFiles, setFetchedFiles] = useState<FetchedFiles>({})
-
-  const addFetchedFile = (file: FileWithPresignedUrl) => {
-    const fileId = file.id
-    setFetchedFiles((prev) => {
-      if (prev[fileId]) return prev
-      return { ...prev, [fileId]: file }
-    })
-    setFileIdToPreview(fileId)
-  }
+  const {
+    fileIdToPreview,
+    activeFile,
+    isLoadingActiveFile,
+    openPreview,
+    closePreview,
+  } = useFilePreview()
 
   const observerRef = useRef<HTMLDivElement | null>(null)
 
@@ -78,18 +75,38 @@ export const Images = () => {
     }
 
     setContent(
-      <ImagePreviewer
-        files={files}
-        fetchedFiles={fetchedFiles}
-        fileIdToPreview={fileIdToPreview}
-        handleClose={() => setFileIdToPreview(null)}
-        addFetchedFile={addFetchedFile}
-        setFileIdToPreview={setFileIdToPreview}
+      <FilePreviewer
+        key={fileIdToPreview}
+        file={activeFile ?? null}
+        isLoading={isLoadingActiveFile}
+        onClose={closePreview}
+        strip={
+          <div className="flex gap-2 overflow-x-auto p-2 max-h-[15vh]">
+            {files.map((item) => (
+              <ImageThumbnail
+                key={item.id}
+                file={item}
+                onSelect={openPreview}
+                maxHeight={100}
+                maxWidth={100}
+                highlight={item.id === fileIdToPreview}
+              />
+            ))}
+          </div>
+        }
       />,
     )
 
     return () => setContent(undefined)
-  }, [fileIdToPreview, setContent, fetchedFiles, files])
+  }, [
+    activeFile,
+    closePreview,
+    fileIdToPreview,
+    files,
+    isLoadingActiveFile,
+    openPreview,
+    setContent,
+  ])
 
   return (
     <Layout className="p-0">
@@ -106,9 +123,7 @@ export const Images = () => {
           {files.map((file) => (
             <ImageThumbnail
               file={file}
-              addFetchedFile={addFetchedFile}
-              setFileIdToPreview={setFileIdToPreview}
-              fileAlreadyFetched={!!fetchedFiles[file.id]}
+              onSelect={openPreview}
               key={file.id}
             />
           ))}
@@ -126,7 +141,7 @@ export const Images = () => {
 }
 
 const SkeletonImageThumbnails = () => {
-  return Array.from({ length: 15 }).map(() => (
-    <Skeleton className="h-[200px] w-[200px] rounded-xl" />
+  return Array.from({ length: 15 }).map((_, index) => (
+    <Skeleton key={index} className="h-[200px] w-[200px] rounded-xl" />
   ))
 }

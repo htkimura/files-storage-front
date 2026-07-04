@@ -1,9 +1,10 @@
 import { Skeleton } from '@/components/ui/skeleton'
 import type { FileWithPresignedThumbnailUrl } from '@htkimura/files-storage-backend.rest-client'
 import classNames from 'classnames'
+import { FileIcon } from 'lucide-react'
 import { type FC, useState } from 'react'
 
-interface Props {
+interface FilePreviewStripItemProps {
   file: FileWithPresignedThumbnailUrl
   onSelect: (fileId: string) => void
   highlight?: boolean
@@ -11,12 +12,12 @@ interface Props {
   maxHeight?: number
 }
 
-const ImageThumbnail: FC<Props> = ({
+export const FilePreviewStripItem: FC<FilePreviewStripItemProps> = ({
   file,
   onSelect,
-  maxHeight = 200,
-  maxWidth = 200,
   highlight = false,
+  maxHeight = 100,
+  maxWidth = 100,
 }) => {
   const [loaded, setLoaded] = useState(false)
   const [thumbFailed, setThumbFailed] = useState(false)
@@ -26,21 +27,23 @@ const ImageThumbnail: FC<Props> = ({
     onSelect(file.id)
   }
 
+  const showThumbnail = Boolean(file.presignedThumbnailUrl) && !thumbFailed
+
   return (
     <button
       type="button"
       onClick={handleClick}
       className={classNames(
-        'overflow-hidden rounded-xl border border-border/80 bg-muted shadow-sm transition-all duration-200',
-        'hover:scale-[1.02] hover:border-primary/25 hover:shadow-md',
-        { 'ring-2 ring-primary ring-offset-2 ring-offset-card': !!highlight },
+        'shrink-0 overflow-hidden rounded-lg border border-white/10 bg-gray-800 transition-all duration-200',
+        'hover:border-white/30',
+        { 'ring-2 ring-primary ring-offset-2 ring-offset-gray-900': highlight },
       )}
     >
-      {file.presignedThumbnailUrl && !thumbFailed ? (
+      {showThumbnail ? (
         <>
           {!loaded && (
             <Skeleton
-              className="rounded-md"
+              className="rounded-lg"
               style={{ width: maxWidth, height: maxHeight }}
             />
           )}
@@ -58,14 +61,15 @@ const ImageThumbnail: FC<Props> = ({
         </>
       ) : (
         <div
-          className="flex items-center justify-center bg-muted text-xs text-muted-foreground"
+          className="flex flex-col items-center justify-center gap-1 px-2 text-white/80"
           style={{ width: maxWidth, height: maxHeight }}
         >
-          No preview
+          <FileIcon className="size-6" strokeWidth={1.25} aria-hidden />
+          <span className="line-clamp-2 w-full text-center text-[10px] leading-tight">
+            {file.name}
+          </span>
         </div>
       )}
     </button>
   )
 }
-
-export default ImageThumbnail
