@@ -25,7 +25,7 @@ interface SidebarItemConfig {
 
 const navItems: SidebarItemConfig[] = [
   {
-    label: 'My Drive',
+    label: 'Memory Vault',
     icon: FolderOpen,
     href: HOME_PAGE_ROUTE,
   },
@@ -103,13 +103,20 @@ export const Sidebar: FC<PropsWithChildren> = ({ children }) => {
         className="border-r border-sidebar-border bg-sidebar text-sidebar-foreground"
       >
         <SidebarHeader className="flex h-16 flex-row items-center justify-center gap-0 border-b border-sidebar-border/80 px-3 py-0">
-          <div className="flex h-full w-full items-center justify-center overflow-hidden px-1 group-data-[collapsible=icon]:px-0">
+          <div className="flex h-full w-full items-center justify-center gap-1.5 overflow-hidden px-1 group-data-[collapsible=icon]:px-0">
             <img
               src="/logo-text.png"
               alt=""
               width={72}
               height={28}
-              className="block h-7 w-auto max-w-full object-contain object-center opacity-90"
+              className="block h-7 w-auto max-w-full shrink object-contain object-center opacity-90 group-data-[collapsible=icon]:hidden"
+            />
+            <img
+              src="/logo-color.png"
+              alt=""
+              width={32}
+              height={32}
+              className="hidden size-8 shrink-0 object-contain object-center opacity-90 group-data-[collapsible=icon]:block"
             />
           </div>
         </SidebarHeader>

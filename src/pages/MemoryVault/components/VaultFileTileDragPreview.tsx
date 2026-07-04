@@ -1,14 +1,14 @@
+import { FileTypeIcon } from '@/components/FileTypeIcon'
 import { cn } from '@/lib/utils'
 import type { FileWithPresignedThumbnailUrl } from '@htkimura/files-storage-backend.rest-client'
-import { FileIcon } from 'lucide-react'
 
-interface DriveFileTileDragPreviewProps {
+interface VaultFileTileDragPreviewProps {
   file: FileWithPresignedThumbnailUrl
 }
 
-export const DriveFileTileDragPreview = ({
+export const VaultFileTileDragPreview = ({
   file,
-}: DriveFileTileDragPreviewProps) => {
+}: VaultFileTileDragPreviewProps) => {
   const url = file.presignedThumbnailUrl
 
   return (
@@ -22,11 +22,7 @@ export const DriveFileTileDragPreview = ({
         {url ? (
           <img src={url} alt="" className="h-full w-full object-cover" />
         ) : (
-          <FileIcon
-            className="size-12 text-muted-foreground"
-            strokeWidth={1.25}
-            aria-hidden
-          />
+          <FileTypeIcon file={file} className="size-12" />
         )}
       </div>
       <p className="truncate text-xs font-medium text-foreground">

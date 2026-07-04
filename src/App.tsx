@@ -15,7 +15,7 @@ import { useUser } from './contexts'
 import { Images } from './pages/Images/page'
 import { Files } from './pages/Files'
 import { FolderPage } from './pages/Folder/page'
-import { MyDrive } from './pages/MyDrive/page'
+import { MemoryVault } from './pages/MemoryVault/page'
 
 const AuthRoute = () => {
   const { token } = useUser()
@@ -32,7 +32,7 @@ function App() {
     <Routes>
       <Route path={LOGIN_PAGE_ROUTE} element={<Login />} />
       <Route element={<AuthRoute />}>
-        <Route path={HOME_PAGE_ROUTE} element={<MyDrive />} />
+        <Route path={HOME_PAGE_ROUTE} element={<MemoryVault />} />
         <Route path={FOLDER_PAGE_ROUTE} element={<FolderPage />} />
         <Route path={FILES_PAGE_ROUTE} element={<Files />} />
         <Route path={IMAGES_PAGE_ROUTE} element={<Images />} />

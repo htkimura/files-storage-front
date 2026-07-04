@@ -1,12 +1,12 @@
 import { Draggable } from '@/components/dnd/draggable'
+import { FileTypeIcon } from '@/components/FileTypeIcon'
+import { FileItemActions } from '@/components/FileItemActions'
 import { cn } from '@/lib/utils'
 import type { FileWithPresignedThumbnailUrl } from '@htkimura/files-storage-backend.rest-client'
-import { FileIcon } from 'lucide-react'
 import { useState } from 'react'
-import { driveFileDndId } from './dnd'
-import { FileItemActions } from '@/components/FileItemActions'
+import { vaultFileDndId } from './dnd'
 
-interface DriveFileTileProps {
+interface VaultFileTileProps {
   file: FileWithPresignedThumbnailUrl
   onDownload: (fileId: string) => void
   onPreview: (fileId: string) => void
@@ -15,21 +15,21 @@ interface DriveFileTileProps {
   isMoving?: boolean
 }
 
-export const DriveFileTile = ({
+export const VaultFileTile = ({
   file,
   onDownload,
   onPreview,
   onRename,
   onDelete,
   isMoving = false,
-}: DriveFileTileProps) => {
+}: VaultFileTileProps) => {
   const [thumbFailed, setThumbFailed] = useState(false)
   const url = file.presignedThumbnailUrl
   const showImage = Boolean(url) && !thumbFailed
 
   return (
     <Draggable
-      id={driveFileDndId(file.id)}
+      id={vaultFileDndId(file.id)}
       disabled={isMoving}
       useDragOverlay
       className={cn(
@@ -52,11 +52,7 @@ export const DriveFileTile = ({
             onError={() => setThumbFailed(true)}
           />
         ) : (
-          <FileIcon
-            className="size-12 text-muted-foreground"
-            strokeWidth={1.25}
-            aria-hidden
-          />
+          <FileTypeIcon file={file} className="size-12" />
         )}
       </button>
       <div className="flex min-w-0 items-center gap-0.5">

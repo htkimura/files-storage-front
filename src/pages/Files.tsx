@@ -52,7 +52,7 @@ import { FileUploadDropzone } from '@/components/upload/FileUploadDropzone'
 import { UploadProgressPopup } from '@/components/upload/UploadProgressPopup'
 import toast from 'react-hot-toast'
 import { FileItemActions } from '@/components/FileItemActions'
-import { RenameFileDialog } from '@/pages/MyDrive/components/RenameFileDialog'
+import { RenameFileDialog } from '@/pages/MemoryVault/components/RenameFileDialog'
 
 export const Files = () => {
   const { token } = useUser()

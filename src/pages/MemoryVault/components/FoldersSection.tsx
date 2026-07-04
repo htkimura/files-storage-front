@@ -1,6 +1,6 @@
 import { Skeleton } from '@/components/ui/skeleton'
 import type { Folder } from '@htkimura/files-storage-backend.rest-client'
-import { DriveFolderTile } from './DriveFolderTile'
+import { VaultFolderTile } from './VaultFolderTile'
 
 interface FoldersSectionProps {
   folders: Folder[]
@@ -41,7 +41,7 @@ export const FoldersSection = ({
           }}
         >
           {folders.map((folder) => (
-            <DriveFolderTile
+            <VaultFolderTile
               key={folder.id}
               folder={folder}
               isMoving={movingFolderId === folder.id}

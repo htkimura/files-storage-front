@@ -64,7 +64,7 @@ export const Login = () => {
         <div className="text-center">
           <img
             src="/logo-text.png"
-            alt="My files"
+            alt="Seek Memo"
             width={100}
             height={36}
             className="mx-auto h-9 w-auto object-contain"

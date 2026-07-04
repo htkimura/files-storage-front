@@ -2,7 +2,8 @@ import { queryDefaultOptions } from '@/config'
 import { useUser } from '@/contexts'
 import { useListMyFolders } from '@htkimura/files-storage-backend.rest-client'
 import { Navigate, useParams } from 'react-router-dom'
-import { DrivePageContent } from '@/pages/MyDrive/DrivePageContent'
+import { MemoryVaultPageContent } from '@/pages/MemoryVault/MemoryVaultPageContent'
+import { MEMORY_VAULT_ROOT_LABEL } from '@/pages/MemoryVault/constants'
 import { getFolderPageRoute, HOME_PAGE_ROUTE } from '@/routes'
 
 export const FolderPage = () => {
@@ -34,7 +35,7 @@ export const FolderPage = () => {
     : null
 
   const breadcrumbs = [
-    { label: 'My Drive', to: HOME_PAGE_ROUTE, dropFolderId: null },
+    { label: MEMORY_VAULT_ROOT_LABEL, to: HOME_PAGE_ROUTE, dropFolderId: null },
     ...(parentFolder
       ? [
           {
@@ -47,7 +48,7 @@ export const FolderPage = () => {
   ]
 
   return (
-    <DrivePageContent
+    <MemoryVaultPageContent
       folderId={folderId}
       title={currentFolder?.name ?? 'Folder'}
       description="Drop files anywhere to upload into this folder. Drag items onto a folder or breadcrumb to move them."

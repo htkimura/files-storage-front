@@ -4,39 +4,39 @@ const FOLDER_DRAG_PREFIX = 'folder-drag:'
 const BREADCRUMB_ROOT_ID = 'breadcrumb:root'
 const BREADCRUMB_FOLDER_PREFIX = 'breadcrumb:folder:'
 
-export const driveFileDndId = (fileId: string) => `${FILE_PREFIX}${fileId}`
+export const vaultFileDndId = (fileId: string) => `${FILE_PREFIX}${fileId}`
 
-export const driveFolderDndId = (folderId: string) =>
+export const vaultFolderDndId = (folderId: string) =>
   `${FOLDER_PREFIX}${folderId}`
 
-export const driveFolderDragDndId = (folderId: string) =>
+export const vaultFolderDragDndId = (folderId: string) =>
   `${FOLDER_DRAG_PREFIX}${folderId}`
 
-export const driveBreadcrumbDndId = (dropFolderId: string | null) =>
+export const vaultBreadcrumbDndId = (dropFolderId: string | null) =>
   dropFolderId === null
     ? BREADCRUMB_ROOT_ID
     : `${BREADCRUMB_FOLDER_PREFIX}${dropFolderId}`
 
-export const parseDriveFileDndId = (id: string | number) => {
+export const parseVaultFileDndId = (id: string | number) => {
   const value = String(id)
   if (!value.startsWith(FILE_PREFIX)) return null
   return value.slice(FILE_PREFIX.length)
 }
 
-export const parseDriveFolderDndId = (id: string | number) => {
+export const parseVaultFolderDndId = (id: string | number) => {
   const value = String(id)
   if (!value.startsWith(FOLDER_PREFIX)) return null
   return value.slice(FOLDER_PREFIX.length)
 }
 
-export const parseDriveFolderDragDndId = (id: string | number) => {
+export const parseVaultFolderDragDndId = (id: string | number) => {
   const value = String(id)
   if (!value.startsWith(FOLDER_DRAG_PREFIX)) return null
   return value.slice(FOLDER_DRAG_PREFIX.length)
 }
 
 /** Returns undefined when the id is not a folder drop target. */
-export const parseDriveDropTargetFolderId = (
+export const parseVaultDropTargetFolderId = (
   id: string | number,
 ): string | null | undefined => {
   const value = String(id)
@@ -47,7 +47,7 @@ export const parseDriveDropTargetFolderId = (
     return value.slice(BREADCRUMB_FOLDER_PREFIX.length)
   }
 
-  const folderId = parseDriveFolderDndId(value)
+  const folderId = parseVaultFolderDndId(value)
   if (folderId) return folderId
 
   return undefined

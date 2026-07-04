@@ -2,13 +2,13 @@ import { cn } from '@/lib/utils'
 import type { Folder } from '@htkimura/files-storage-backend.rest-client'
 import { FolderIcon } from 'lucide-react'
 
-interface DriveFolderTileDragPreviewProps {
+interface VaultFolderTileDragPreviewProps {
   folder: Folder
 }
 
-export const DriveFolderTileDragPreview = ({
+export const VaultFolderTileDragPreview = ({
   folder,
-}: DriveFolderTileDragPreviewProps) => {
+}: VaultFolderTileDragPreviewProps) => {
   return (
     <div
       className={cn(

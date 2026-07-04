@@ -9,7 +9,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 const PAGE_SIZE = 20
 
-export const useDriveData = (folderId: string | null) => {
+export const useMemoryVaultData = (folderId: string | null) => {
   const { token } = useUser()
   const clientAxiosConfig = {
     ...queryDefaultOptions.axios,

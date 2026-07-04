@@ -1,7 +1,7 @@
 import { Skeleton } from '@/components/ui/skeleton'
 import type { FileWithPresignedThumbnailUrl } from '@htkimura/files-storage-backend.rest-client'
 import type { RefObject } from 'react'
-import { DriveFileTile } from './DriveFileTile'
+import { VaultFileTile } from './VaultFileTile'
 
 const FILE_TILE_SIZE = 'minmax(9rem, 1fr)'
 
@@ -42,7 +42,7 @@ export const FilesSection = ({
         }}
       >
         {files.map((file) => (
-          <DriveFileTile
+          <VaultFileTile
             key={file.id}
             file={file}
             onDownload={onDownload}

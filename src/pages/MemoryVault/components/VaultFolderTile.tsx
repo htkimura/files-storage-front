@@ -5,28 +5,28 @@ import { getFolderPageRoute } from '@/routes'
 import type { Folder } from '@htkimura/files-storage-backend.rest-client'
 import { FolderIcon } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { driveFolderDndId, driveFolderDragDndId } from './dnd'
+import { vaultFolderDndId, vaultFolderDragDndId } from './dnd'
 
-interface DriveFolderTileProps {
+interface VaultFolderTileProps {
   folder: Folder
   isMoving?: boolean
   isDragActive?: boolean
 }
 
-export const DriveFolderTile = ({
+export const VaultFolderTile = ({
   folder,
   isMoving = false,
   isDragActive = false,
-}: DriveFolderTileProps) => {
+}: VaultFolderTileProps) => {
   return (
     <Draggable
-      id={driveFolderDragDndId(folder.id)}
+      id={vaultFolderDragDndId(folder.id)}
       disabled={isMoving}
       useDragOverlay
       className={cn(isMoving && 'pointer-events-none opacity-50')}
     >
       <Droppable
-        id={driveFolderDndId(folder.id)}
+        id={vaultFolderDndId(folder.id)}
         className={cn(
           'flex min-w-0 items-center gap-2 rounded-xl bg-muted/50 px-3 py-2.5',
           'transition-colors hover:bg-muted/80',

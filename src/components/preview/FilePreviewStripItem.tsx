@@ -1,7 +1,7 @@
+import { FileTypeIcon } from '@/components/FileTypeIcon'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { FileWithPresignedThumbnailUrl } from '@htkimura/files-storage-backend.rest-client'
 import classNames from 'classnames'
-import { FileIcon } from 'lucide-react'
 import { type FC, useState } from 'react'
 
 interface FilePreviewStripItemProps {
@@ -50,7 +50,7 @@ export const FilePreviewStripItem: FC<FilePreviewStripItemProps> = ({
         </>
       ) : (
         <div className="flex h-full w-full flex-col items-center justify-center gap-1 px-2 text-white/80">
-          <FileIcon className="size-6 shrink-0" strokeWidth={1.25} aria-hidden />
+          <FileTypeIcon file={file} className="size-6 shrink-0" />
           <span className="line-clamp-2 w-full text-center text-[10px] leading-tight">
             {file.name}
           </span>

@@ -1,24 +1,24 @@
 import { Droppable } from '@/components/dnd/droppable'
 import { cn } from '@/lib/utils'
 import { Link } from 'react-router-dom'
-import { driveBreadcrumbDndId } from './dnd'
+import { vaultBreadcrumbDndId } from './dnd'
 
-interface DriveBreadcrumbItemProps {
+interface VaultBreadcrumbItemProps {
   label: string
   to: string
   dropFolderId: string | null
   isDragging?: boolean
 }
 
-export const DriveBreadcrumbItem = ({
+export const VaultBreadcrumbItem = ({
   label,
   to,
   dropFolderId,
   isDragging = false,
-}: DriveBreadcrumbItemProps) => {
+}: VaultBreadcrumbItemProps) => {
   return (
     <Droppable
-      id={driveBreadcrumbDndId(dropFolderId)}
+      id={vaultBreadcrumbDndId(dropFolderId)}
       className={cn(
         'rounded-md transition-all',
         isDragging &&

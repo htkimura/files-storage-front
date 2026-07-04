@@ -32,42 +32,43 @@ import { ChevronRightIcon } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { DeleteFileDialog } from './components/DeleteFileDialog'
-import { DriveBreadcrumbItem } from './components/DriveBreadcrumbItem'
-import { DriveFileTileDragPreview } from './components/DriveFileTileDragPreview'
-import { DriveFolderTileDragPreview } from './components/DriveFolderTileDragPreview'
+import { VaultBreadcrumbItem } from './components/VaultBreadcrumbItem'
+import { VaultFileTileDragPreview } from './components/VaultFileTileDragPreview'
+import { VaultFolderTileDragPreview } from './components/VaultFolderTileDragPreview'
 import { FilesSection } from './components/FilesSection'
 import { FoldersSection } from './components/FoldersSection'
 import { RenameFileDialog } from './components/RenameFileDialog'
-import { useDriveData } from './hooks/useDriveData'
+import { MEMORY_VAULT_ROOT_LABEL } from './constants'
+import { useMemoryVaultData } from './hooks/useMemoryVaultData'
 import {
-  parseDriveDropTargetFolderId,
-  parseDriveFileDndId,
-  parseDriveFolderDragDndId,
+  parseVaultDropTargetFolderId,
+  parseVaultFileDndId,
+  parseVaultFolderDragDndId,
 } from './components/dnd'
 
-export interface DriveBreadcrumb {
+export interface VaultBreadcrumb {
   label: string
   to: string
   dropFolderId: string | null
 }
 
-interface DrivePageContentProps {
+interface MemoryVaultPageContentProps {
   folderId: string | null
   title: string
   description: string
-  breadcrumbs?: DriveBreadcrumb[]
+  breadcrumbs?: VaultBreadcrumb[]
 }
 
 type ActiveDragItem =
   | { type: 'file'; item: FileWithPresignedThumbnailUrl }
   | { type: 'folder'; item: Folder }
 
-export const DrivePageContent = ({
+export const MemoryVaultPageContent = ({
   folderId,
   title,
   description,
   breadcrumbs = [],
-}: DrivePageContentProps) => {
+}: MemoryVaultPageContentProps) => {
   const { token } = useUser()
   const { setContent } = useOverlay()
   const {
@@ -83,7 +84,7 @@ export const DrivePageContent = ({
     loadMoreFiles,
     observerRef,
     refreshFiles,
-  } = useDriveData(folderId)
+  } = useMemoryVaultData(folderId)
 
   const {
     uploadItems,
@@ -291,7 +292,7 @@ export const DrivePageContent = ({
 
   const getDestinationName = useCallback(
     (targetFolderId: string | null) => {
-      if (targetFolderId === null) return 'My Drive'
+      if (targetFolderId === null) return MEMORY_VAULT_ROOT_LABEL
       return (
         folders.find((item) => item.id === targetFolderId)?.name ??
         breadcrumbs.find((item) => item.dropFolderId === targetFolderId)
@@ -310,14 +311,14 @@ export const DrivePageContent = ({
 
   const handleDragStart = useCallback(
     (event: DragStartEvent) => {
-      const fileId = parseDriveFileDndId(event.active.id)
+      const fileId = parseVaultFileDndId(event.active.id)
       if (fileId) {
         const file = allFiles.find((item) => item.id === fileId)
         if (file) setActiveDrag({ type: 'file', item: file })
         return
       }
 
-      const folderId = parseDriveFolderDragDndId(event.active.id)
+      const folderId = parseVaultFolderDragDndId(event.active.id)
       if (folderId) {
         const folder = folders.find((item) => item.id === folderId)
         if (folder) setActiveDrag({ type: 'folder', item: folder })
@@ -403,16 +404,16 @@ export const DrivePageContent = ({
       const overId = event.over?.id
       if (overId === undefined || isMoving) return
 
-      const targetFolderId = parseDriveDropTargetFolderId(overId)
+      const targetFolderId = parseVaultDropTargetFolderId(overId)
       if (targetFolderId === undefined) return
 
-      const fileId = parseDriveFileDndId(event.active.id)
+      const fileId = parseVaultFileDndId(event.active.id)
       if (fileId) {
         handleMoveFile(fileId, targetFolderId)
         return
       }
 
-      const draggedFolderId = parseDriveFolderDragDndId(event.active.id)
+      const draggedFolderId = parseVaultFolderDragDndId(event.active.id)
       if (draggedFolderId) {
         handleMoveFolder(draggedFolderId, targetFolderId)
       }
@@ -470,7 +471,7 @@ export const DrivePageContent = ({
                         )}
                       />
                     )}
-                    <DriveBreadcrumbItem
+                    <VaultBreadcrumbItem
                       label={crumb.label}
                       to={crumb.to}
                       dropFolderId={crumb.dropFolderId}
@@ -518,9 +519,9 @@ export const DrivePageContent = ({
 
         <DragOverlay dropAnimation={null}>
           {activeDrag?.type === 'file' ? (
-            <DriveFileTileDragPreview file={activeDrag.item} />
+            <VaultFileTileDragPreview file={activeDrag.item} />
           ) : activeDrag?.type === 'folder' ? (
-            <DriveFolderTileDragPreview folder={activeDrag.item} />
+            <VaultFolderTileDragPreview folder={activeDrag.item} />
           ) : null}
         </DragOverlay>
       </DndContext>
