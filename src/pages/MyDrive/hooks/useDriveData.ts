@@ -105,6 +105,11 @@ export const useDriveData = (folderId: string | null) => {
     }
   }, [hasMore, filesFetching])
 
+  const loadMoreFiles = useCallback(() => {
+    if (!hasMore || filesFetching) return
+    setPage((current) => current + 1)
+  }, [hasMore, filesFetching])
+
   const refreshFiles = useCallback(async () => {
     setPage(1)
     await refetchFiles()
@@ -121,6 +126,7 @@ export const useDriveData = (folderId: string | null) => {
     filesFetching,
     hasMore,
     observerRef,
+    loadMoreFiles,
     refreshFiles,
   }
 }

@@ -1,6 +1,11 @@
 import { FilePreviewer } from '@/components/preview/FilePreviewer'
+import {
+  FilePreviewStrip,
+  PreviewStripItem,
+} from '@/components/preview/FilePreviewStrip'
 import { useFilePreview } from '@/hooks/useFilePreview'
 import type { FetchedPreviewFiles } from '@/lib/filePreview'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Layout } from '@/components/layout/layout'
 import { queryDefaultOptions } from '@/config'
 import { useOverlay, useUser } from '@/contexts'
@@ -8,9 +13,8 @@ import {
   type FileWithPresignedThumbnailUrl,
   useMyFiles,
 } from '@htkimura/files-storage-backend.rest-client'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import ImageThumbnail from './components/ImageThumbnail'
-import { Skeleton } from '@/components/ui/skeleton'
 
 export type { FetchedPreviewFiles as FetchedFiles }
 
@@ -60,6 +64,12 @@ export const Images = () => {
   }, [filesPayload, page])
 
   const files = allFiles
+  const fileIds = files.map((file) => file.id)
+
+  const loadMoreFiles = useCallback(() => {
+    if (!hasMore || isFetchingFiles) return
+    setPage((current) => current + 1)
+  }, [hasMore, isFetchingFiles])
 
   const {
     fileIdToPreview,
@@ -106,18 +116,24 @@ export const Images = () => {
         isLoading={isLoadingActiveFile}
         onClose={closePreview}
         strip={
-          <div className="flex gap-2 overflow-x-auto p-2 max-h-[15vh]">
+          <FilePreviewStrip
+            selectedFileId={fileIdToPreview}
+            fileIds={fileIds}
+            hasMore={hasMore}
+            isLoadingMore={isFetchingFiles}
+            onLoadMore={loadMoreFiles}
+          >
             {files.map((item) => (
-              <ImageThumbnail
-                key={item.id}
-                file={item}
-                onSelect={openPreview}
-                maxHeight={100}
-                maxWidth={100}
-                highlight={item.id === fileIdToPreview}
-              />
+              <PreviewStripItem key={item.id} fileId={item.id}>
+                <ImageThumbnail
+                  file={item}
+                  onSelect={openPreview}
+                  highlight={item.id === fileIdToPreview}
+                  variant="strip"
+                />
+              </PreviewStripItem>
             ))}
-          </div>
+          </FilePreviewStrip>
         }
       />,
     )
@@ -129,6 +145,10 @@ export const Images = () => {
     fileIdToPreview,
     files,
     isLoadingActiveFile,
+    fileIds,
+    hasMore,
+    isFetchingFiles,
+    loadMoreFiles,
     openPreview,
     setContent,
   ])

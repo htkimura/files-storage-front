@@ -8,16 +8,12 @@ interface FilePreviewStripItemProps {
   file: FileWithPresignedThumbnailUrl
   onSelect: (fileId: string) => void
   highlight?: boolean
-  maxWidth?: number
-  maxHeight?: number
 }
 
 export const FilePreviewStripItem: FC<FilePreviewStripItemProps> = ({
   file,
   onSelect,
   highlight = false,
-  maxHeight = 100,
-  maxWidth = 100,
 }) => {
   const [loaded, setLoaded] = useState(false)
   const [thumbFailed, setThumbFailed] = useState(false)
@@ -34,37 +30,27 @@ export const FilePreviewStripItem: FC<FilePreviewStripItemProps> = ({
       type="button"
       onClick={handleClick}
       className={classNames(
-        'shrink-0 overflow-hidden rounded-lg border border-white/10 bg-gray-800 transition-all duration-200',
+        'block h-full w-full overflow-hidden rounded-lg border border-white/10 bg-gray-800 transition-all duration-200',
         'hover:border-white/30',
-        { 'ring-2 ring-primary ring-offset-2 ring-offset-gray-900': highlight },
+        { 'ring-2 ring-primary ring-inset': highlight },
       )}
     >
       {showThumbnail ? (
         <>
-          {!loaded && (
-            <Skeleton
-              className="rounded-lg"
-              style={{ width: maxWidth, height: maxHeight }}
-            />
-          )}
+          {!loaded && <Skeleton className="h-full w-full rounded-lg" />}
           <img
             src={file.presignedThumbnailUrl}
             alt={file.name}
             onLoad={() => setLoaded(true)}
             onError={() => setThumbFailed(true)}
-            width={maxWidth}
-            height={maxHeight}
-            className={classNames('object-cover object-center', {
+            className={classNames('h-full w-full object-cover object-center', {
               hidden: !loaded,
             })}
           />
         </>
       ) : (
-        <div
-          className="flex flex-col items-center justify-center gap-1 px-2 text-white/80"
-          style={{ width: maxWidth, height: maxHeight }}
-        >
-          <FileIcon className="size-6" strokeWidth={1.25} aria-hidden />
+        <div className="flex h-full w-full flex-col items-center justify-center gap-1 px-2 text-white/80">
+          <FileIcon className="size-6 shrink-0" strokeWidth={1.25} aria-hidden />
           <span className="line-clamp-2 w-full text-center text-[10px] leading-tight">
             {file.name}
           </span>

@@ -1,6 +1,10 @@
 import { Layout } from '@/components/layout/layout'
 import { FilePreviewer } from '@/components/preview/FilePreviewer'
 import { FilePreviewStripItem } from '@/components/preview/FilePreviewStripItem'
+import {
+  FilePreviewStrip,
+  PreviewStripItem,
+} from '@/components/preview/FilePreviewStrip'
 import { UploadProgressPopup } from '@/components/upload/UploadProgressPopup'
 import { useOverlay, useUser } from '@/contexts'
 import { useFilePreview } from '@/hooks/useFilePreview'
@@ -76,6 +80,7 @@ export const DrivePageContent = ({
     filesInitialLoading,
     filesFetching,
     hasMore,
+    loadMoreFiles,
     observerRef,
     refreshFiles,
   } = useDriveData(folderId)
@@ -120,16 +125,23 @@ export const DrivePageContent = ({
         isLoading={isLoadingActiveFile}
         onClose={closePreview}
         strip={
-          <div className="flex gap-2 overflow-x-auto p-2 max-h-[15vh]">
+          <FilePreviewStrip
+            selectedFileId={fileIdToPreview}
+            fileIds={allFiles.map((file) => file.id)}
+            hasMore={hasMore}
+            isLoadingMore={filesFetching}
+            onLoadMore={loadMoreFiles}
+          >
             {allFiles.map((item) => (
-              <FilePreviewStripItem
-                key={item.id}
-                file={item}
-                onSelect={openPreview}
-                highlight={item.id === fileIdToPreview}
-              />
+              <PreviewStripItem key={item.id} fileId={item.id}>
+                <FilePreviewStripItem
+                  file={item}
+                  onSelect={openPreview}
+                  highlight={item.id === fileIdToPreview}
+                />
+              </PreviewStripItem>
             ))}
-          </div>
+          </FilePreviewStrip>
         }
       />,
     )
@@ -140,7 +152,10 @@ export const DrivePageContent = ({
     allFiles,
     closePreview,
     fileIdToPreview,
+    filesFetching,
+    hasMore,
     isLoadingActiveFile,
+    loadMoreFiles,
     openPreview,
     setContent,
   ])
