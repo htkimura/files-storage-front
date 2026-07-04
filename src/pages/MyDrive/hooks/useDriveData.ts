@@ -2,6 +2,7 @@ import { queryDefaultOptions } from '@/config'
 import { useUser } from '@/contexts'
 import {
   type FileWithPresignedThumbnailUrl,
+  type Folder,
   useListMyFolders,
   useMyFiles,
 } from '@htkimura/files-storage-backend.rest-client'
@@ -29,15 +30,21 @@ export const useDriveData = (folderId: string | null) => {
       queryKey: ['/folders', foldersQueryParams],
     },
   })
-  const folders = foldersRes?.data ?? []
-
+  const [allFolders, setAllFolders] = useState<Folder[]>([])
   const [page, setPage] = useState(1)
   const [allFiles, setAllFiles] = useState<FileWithPresignedThumbnailUrl[]>([])
 
   useEffect(() => {
+    setAllFolders([])
     setPage(1)
     setAllFiles([])
   }, [folderId])
+
+  useEffect(() => {
+    if (foldersRes?.data) {
+      setAllFolders(foldersRes.data)
+    }
+  }, [foldersRes?.data])
 
   const {
     data: filesDataRaw,
@@ -94,7 +101,8 @@ export const useDriveData = (folderId: string | null) => {
 
   return {
     clientAxiosConfig,
-    folders,
+    folders: allFolders,
+    setAllFolders,
     foldersLoading,
     allFiles,
     setAllFiles,

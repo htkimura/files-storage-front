@@ -2,9 +2,11 @@ import { Layout } from '@/components/layout/layout'
 import { cn } from '@/lib/utils'
 import {
   type FileWithPresignedThumbnailUrl,
+  type Folder,
   useDeleteBulkFilesByIds,
   useGetFileById,
   useMoveFileToFolder,
+  useUpdateParentFolder,
 } from '@htkimura/files-storage-backend.rest-client'
 import {
   DndContext,
@@ -23,8 +25,10 @@ import { DriveBreadcrumbItem } from './components/DriveBreadcrumbItem'
 import {
   parseDriveDropTargetFolderId,
   parseDriveFileDndId,
+  parseDriveFolderDragDndId,
 } from './components/dnd'
 import { DriveFileTileDragPreview } from './components/DriveFileTileDragPreview'
+import { DriveFolderTileDragPreview } from './components/DriveFolderTileDragPreview'
 import { FilesSection } from './components/FilesSection'
 import { FoldersSection } from './components/FoldersSection'
 import { useDriveData } from './hooks/useDriveData'
@@ -42,6 +46,10 @@ interface DrivePageContentProps {
   breadcrumbs?: DriveBreadcrumb[]
 }
 
+type ActiveDragItem =
+  | { type: 'file'; item: FileWithPresignedThumbnailUrl }
+  | { type: 'folder'; item: Folder }
+
 export const DrivePageContent = ({
   folderId,
   title,
@@ -51,6 +59,7 @@ export const DrivePageContent = ({
   const {
     clientAxiosConfig,
     folders,
+    setAllFolders,
     allFiles,
     setAllFiles,
     foldersLoading,
@@ -129,13 +138,33 @@ export const DrivePageContent = ({
     deleteBulkFiles({ params: { ids: [fileToDelete.id] } })
   }
 
-  const [activeFile, setActiveFile] =
-    useState<FileWithPresignedThumbnailUrl | null>(null)
+  const [activeDrag, setActiveDrag] = useState<ActiveDragItem | null>(null)
   const [movingFileId, setMovingFileId] = useState<string | null>(null)
+  const [movingFolderId, setMovingFolderId] = useState<string | null>(null)
 
   const { mutate: moveFileToFolder } = useMoveFileToFolder({
     axios: clientAxiosConfig,
   })
+
+  const { mutate: updateParentFolder } = useUpdateParentFolder({
+    axios: clientAxiosConfig,
+  })
+
+  const isMoving = Boolean(movingFileId || movingFolderId)
+  const isDragging = Boolean(activeDrag)
+
+  const getDestinationName = useCallback(
+    (targetFolderId: string | null) => {
+      if (targetFolderId === null) return 'My Drive'
+      return (
+        folders.find((item) => item.id === targetFolderId)?.name ??
+        breadcrumbs.find((item) => item.dropFolderId === targetFolderId)
+          ?.label ??
+        'folder'
+      )
+    },
+    [breadcrumbs, folders],
+  )
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -146,39 +175,30 @@ export const DrivePageContent = ({
   const handleDragStart = useCallback(
     (event: DragStartEvent) => {
       const fileId = parseDriveFileDndId(event.active.id)
-      if (!fileId) return
+      if (fileId) {
+        const file = allFiles.find((item) => item.id === fileId)
+        if (file) setActiveDrag({ type: 'file', item: file })
+        return
+      }
 
-      const file = allFiles.find((item) => item.id === fileId)
-      if (file) setActiveFile(file)
+      const folderId = parseDriveFolderDragDndId(event.active.id)
+      if (folderId) {
+        const folder = folders.find((item) => item.id === folderId)
+        if (folder) setActiveDrag({ type: 'folder', item: folder })
+      }
     },
-    [allFiles],
+    [allFiles, folders],
   )
 
-  const handleDragEnd = useCallback(
-    (event: DragEndEvent) => {
-      setActiveFile(null)
-
-      const fileId = parseDriveFileDndId(event.active.id)
-      const overId = event.over?.id
-
-      if (!fileId || overId === undefined || movingFileId) return
-
-      const targetFolderId = parseDriveDropTargetFolderId(overId)
-      if (targetFolderId === undefined) return
-
+  const handleMoveFile = useCallback(
+    (fileId: string, targetFolderId: string | null) => {
       const file = allFiles.find((item) => item.id === fileId)
       if (!file) return
 
       const currentFolderId = file.folderId ?? null
       if (currentFolderId === targetFolderId) return
 
-      const destinationName =
-        targetFolderId === null
-          ? 'My Drive'
-          : (folders.find((item) => item.id === targetFolderId)?.name ??
-            breadcrumbs.find((item) => item.dropFolderId === targetFolderId)
-              ?.label ??
-            'folder')
+      const destinationName = getDestinationName(targetFolderId)
 
       setMovingFileId(fileId)
 
@@ -201,18 +221,73 @@ export const DrivePageContent = ({
         },
       )
     },
-    [
-      allFiles,
-      breadcrumbs,
-      folders,
-      moveFileToFolder,
-      movingFileId,
-      setAllFiles,
-    ],
+    [allFiles, getDestinationName, moveFileToFolder, setAllFiles],
+  )
+
+  const handleMoveFolder = useCallback(
+    (draggedFolderId: string, targetFolderId: string | null) => {
+      const folder = folders.find((item) => item.id === draggedFolderId)
+      if (!folder) return
+
+      if (draggedFolderId === targetFolderId) return
+
+      const currentParentFolderId = folder.parentFolderId ?? null
+      if (currentParentFolderId === targetFolderId) return
+
+      const destinationName = getDestinationName(targetFolderId)
+
+      setMovingFolderId(draggedFolderId)
+
+      updateParentFolder(
+        { id: draggedFolderId, data: { parentFolderId: targetFolderId } },
+        {
+          onSuccess: () => {
+            setAllFolders((prev) =>
+              prev.filter((item) => item.id !== draggedFolderId),
+            )
+            toast.success(`Moved "${folder.name}" to "${destinationName}"`)
+          },
+          onError: (error) => {
+            const message =
+              (error.response?.data as { message?: string } | undefined)
+                ?.message || 'Could not move folder'
+            toast.error(message)
+          },
+          onSettled: () => {
+            setMovingFolderId(null)
+          },
+        },
+      )
+    },
+    [folders, getDestinationName, setAllFolders, updateParentFolder],
+  )
+
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      setActiveDrag(null)
+
+      const overId = event.over?.id
+      if (overId === undefined || isMoving) return
+
+      const targetFolderId = parseDriveDropTargetFolderId(overId)
+      if (targetFolderId === undefined) return
+
+      const fileId = parseDriveFileDndId(event.active.id)
+      if (fileId) {
+        handleMoveFile(fileId, targetFolderId)
+        return
+      }
+
+      const draggedFolderId = parseDriveFolderDragDndId(event.active.id)
+      if (draggedFolderId) {
+        handleMoveFolder(draggedFolderId, targetFolderId)
+      }
+    },
+    [handleMoveFile, handleMoveFolder, isMoving],
   )
 
   const handleDragCancel = useCallback(() => {
-    setActiveFile(null)
+    setActiveDrag(null)
   }, [])
 
   return (
@@ -230,7 +305,7 @@ export const DrivePageContent = ({
                 aria-label="Breadcrumb"
                 className={cn(
                   'mb-2 flex flex-wrap items-center gap-1 text-sm text-muted-foreground transition-colors',
-                  activeFile && 'rounded-lg bg-muted/40 px-2 py-1.5',
+                  isDragging && 'rounded-lg bg-muted/40 px-2 py-1.5',
                 )}
               >
                 {breadcrumbs.map((crumb, index) => (
@@ -239,7 +314,7 @@ export const DrivePageContent = ({
                       <ChevronRightIcon
                         className={cn(
                           'size-3.5 shrink-0',
-                          activeFile && 'text-primary/50',
+                          isDragging && 'text-primary/50',
                         )}
                       />
                     )}
@@ -247,7 +322,7 @@ export const DrivePageContent = ({
                       label={crumb.label}
                       to={crumb.to}
                       dropFolderId={crumb.dropFolderId}
-                      isDraggingFile={Boolean(activeFile)}
+                      isDragging={isDragging}
                     />
                   </span>
                 ))}
@@ -259,7 +334,12 @@ export const DrivePageContent = ({
             <p className="mt-1 text-sm text-muted-foreground">{description}</p>
           </div>
 
-          <FoldersSection folders={folders} isLoading={foldersLoading} />
+          <FoldersSection
+            folders={folders}
+            isLoading={foldersLoading}
+            movingFolderId={movingFolderId}
+            isDragActive={isDragging}
+          />
 
           <FilesSection
             files={allFiles}
@@ -274,7 +354,11 @@ export const DrivePageContent = ({
         </div>
 
         <DragOverlay dropAnimation={null}>
-          {activeFile ? <DriveFileTileDragPreview file={activeFile} /> : null}
+          {activeDrag?.type === 'file' ? (
+            <DriveFileTileDragPreview file={activeDrag.item} />
+          ) : activeDrag?.type === 'folder' ? (
+            <DriveFolderTileDragPreview folder={activeDrag.item} />
+          ) : null}
         </DragOverlay>
       </DndContext>
 

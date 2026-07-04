@@ -5,9 +5,16 @@ import { DriveFolderTile } from './DriveFolderTile'
 interface FoldersSectionProps {
   folders: Folder[]
   isLoading: boolean
+  movingFolderId?: string | null
+  isDragActive?: boolean
 }
 
-export const FoldersSection = ({ folders, isLoading }: FoldersSectionProps) => {
+export const FoldersSection = ({
+  folders,
+  isLoading,
+  movingFolderId = null,
+  isDragActive = false,
+}: FoldersSectionProps) => {
   return (
     <section className="flex flex-col gap-3">
       <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
@@ -34,7 +41,12 @@ export const FoldersSection = ({ folders, isLoading }: FoldersSectionProps) => {
           }}
         >
           {folders.map((folder) => (
-            <DriveFolderTile key={folder.id} folder={folder} />
+            <DriveFolderTile
+              key={folder.id}
+              folder={folder}
+              isMoving={movingFolderId === folder.id}
+              isDragActive={isDragActive}
+            />
           ))}
         </div>
       )}
