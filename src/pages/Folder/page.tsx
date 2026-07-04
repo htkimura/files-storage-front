@@ -50,7 +50,7 @@ export const FolderPage = () => {
     <DrivePageContent
       folderId={folderId}
       title={currentFolder?.name ?? 'Folder'}
-      description="Folders and files inside this folder. Drag items onto a folder or breadcrumb to move them."
+      description="Drop files anywhere to upload into this folder. Drag items onto a folder or breadcrumb to move them."
       breadcrumbs={breadcrumbs}
     />
   )

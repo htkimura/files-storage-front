@@ -1,5 +1,4 @@
 import { Layout } from '@/components/layout/layout'
-import { FileUploadDropzone } from '@/components/upload/FileUploadDropzone'
 import { UploadProgressPopup } from '@/components/upload/UploadProgressPopup'
 import { useUser } from '@/contexts'
 import { useFileUpload } from '@/hooks/useFileUpload'
@@ -91,6 +90,7 @@ export const DrivePageContent = ({
     token,
     folderId,
     onUploadComplete: refreshFiles,
+    noClick: true,
   })
 
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null)
@@ -366,7 +366,25 @@ export const DrivePageContent = ({
         onDragEnd={handleDragEnd}
         onDragCancel={handleDragCancel}
       >
-        <div className="flex flex-col gap-10 p-6 md:p-8 md:pb-10">
+        <div
+          {...getRootProps({
+            className: cn(
+              'relative flex flex-col gap-10 p-6 md:p-8 md:pb-10',
+              isUploadDragActive &&
+                'rounded-xl bg-primary/[0.03] ring-2 ring-inset ring-primary/25',
+            ),
+          })}
+        >
+          <input {...getInputProps()} className="sr-only" tabIndex={-1} />
+
+          {isUploadDragActive && (
+            <div className="pointer-events-none absolute inset-x-6 top-6 z-10 flex justify-center md:inset-x-8 md:top-8">
+              <span className="rounded-full border border-primary/30 bg-card/95 px-3 py-1 text-xs font-medium text-foreground shadow-sm">
+                Drop to upload here
+              </span>
+            </div>
+          )}
+
           <div>
             {breadcrumbs.length > 0 && (
               <nav
@@ -401,12 +419,6 @@ export const DrivePageContent = ({
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">{description}</p>
           </div>
-
-          <FileUploadDropzone
-            getRootProps={getRootProps}
-            getInputProps={getInputProps}
-            isDragActive={isUploadDragActive}
-          />
 
           <UploadProgressPopup
             items={uploadItems}

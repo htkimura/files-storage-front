@@ -10,12 +10,15 @@ interface UseFileUploadOptions {
   token: string | null | undefined
   folderId?: string | null
   onUploadComplete?: () => void | Promise<unknown>
+  /** When true, only drag-and-drop uploads — clicks won't open the file picker. */
+  noClick?: boolean
 }
 
 export const useFileUpload = ({
   token,
   folderId = null,
   onUploadComplete,
+  noClick = false,
 }: UseFileUploadOptions) => {
   const [uploadItems, setUploadItems] = useState<UploadRowState[]>([])
   const [uploadCollapsed, setUploadCollapsed] = useState(false)
@@ -43,11 +46,9 @@ export const useFileUpload = ({
     setUploadItems((prev) => prev.filter((row) => row.id !== id))
   }, [])
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    noKeyboard: true,
-    disabled: !token,
-    onDrop: (acceptedFiles) => {
-      if (!token || acceptedFiles.length === 0) return
+  const uploadFiles = useCallback(
+    (files: File[]) => {
+      if (!token || files.length === 0) return
 
       const authHeaders = { Authorization: `Bearer ${token}` }
       const axiosConfig = {
@@ -55,7 +56,7 @@ export const useFileUpload = ({
         headers: authHeaders,
       }
 
-      const pairs = acceptedFiles.map((file) => ({
+      const pairs = files.map((file) => ({
         file,
         row: {
           id: crypto.randomUUID(),
@@ -127,6 +128,16 @@ export const useFileUpload = ({
           }
         })()
       }
+    },
+    [folderId, onUploadComplete, token],
+  )
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    noKeyboard: true,
+    noClick,
+    disabled: !token,
+    onDrop: (acceptedFiles) => {
+      uploadFiles(acceptedFiles)
     },
   })
 

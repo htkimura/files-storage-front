@@ -5,7 +5,7 @@ export const MyDrive = () => {
     <DrivePageContent
       folderId={null}
       title="My Drive"
-      description="Folders and files in your drive root. Drag items onto a folder or breadcrumb to move them."
+      description="Drop files anywhere to upload. Drag items onto a folder or breadcrumb to move them."
     />
   )
 }
