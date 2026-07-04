@@ -4,7 +4,10 @@ import type { FetchedPreviewFiles } from '@/lib/filePreview'
 import { Layout } from '@/components/layout/layout'
 import { queryDefaultOptions } from '@/config'
 import { useOverlay, useUser } from '@/contexts'
-import { useMyFiles } from '@htkimura/files-storage-backend.rest-client'
+import {
+  type FileWithPresignedThumbnailUrl,
+  useMyFiles,
+} from '@htkimura/files-storage-backend.rest-client'
 import { useEffect, useRef, useState } from 'react'
 import ImageThumbnail from './components/ImageThumbnail'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -22,19 +25,41 @@ export const Images = () => {
   }
 
   const [page, setPage] = useState(1)
+  const [allFiles, setAllFiles] = useState<FileWithPresignedThumbnailUrl[]>([])
   const size = 20
 
-  const { data: filesDataRaw, isLoading: isLoadingFiles } = useMyFiles(
+  const {
+    data: filesDataRaw,
+    isLoading: isLoadingFiles,
+    isFetching: isFetchingFiles,
+  } = useMyFiles(
     { page, size, filterType: ['image'] },
     {
       axios: clientAxiosConfig,
     },
   )
 
-  const { data: filesData } = filesDataRaw || {}
+  const filesPayload = filesDataRaw?.data
+  const hasMore = filesPayload?.hasMore ?? false
 
-  const files = filesData?.data || []
-  const hasMore = filesData?.hasMore || false
+  useEffect(() => {
+    if (!filesPayload?.data) return
+    const incoming = filesPayload.data
+    if (page === 1) {
+      setAllFiles(incoming)
+      return
+    }
+    setAllFiles((prev) => {
+      const ids = new Set(prev.map((f) => f.id))
+      const next = [...prev]
+      for (const f of incoming) {
+        if (!ids.has(f.id)) next.push(f)
+      }
+      return next
+    })
+  }, [filesPayload, page])
+
+  const files = allFiles
 
   const {
     fileIdToPreview,
@@ -47,7 +72,7 @@ export const Images = () => {
   const observerRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
-    if (!hasMore || isLoadingFiles) return
+    if (!hasMore || isFetchingFiles) return
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -64,7 +89,7 @@ export const Images = () => {
     return () => {
       if (ref) observer.unobserve(ref)
     }
-  }, [hasMore, isLoadingFiles, setPage])
+  }, [hasMore, isFetchingFiles])
 
   const { setContent } = useOverlay()
 
@@ -127,7 +152,10 @@ export const Images = () => {
               key={file.id}
             />
           ))}
-          {isLoadingFiles && <SkeletonImageThumbnails />}
+          {isLoadingFiles && files.length === 0 && <SkeletonImageThumbnails />}
+          {isFetchingFiles && files.length > 0 && (
+            <Skeleton className="h-[200px] w-[200px] rounded-xl" />
+          )}
           {hasMore && (
             <div
               ref={observerRef}
