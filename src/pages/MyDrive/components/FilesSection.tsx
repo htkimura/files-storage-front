@@ -12,6 +12,7 @@ interface FilesSectionProps {
   hasMore: boolean
   observerRef: RefObject<HTMLDivElement>
   onDownload: (fileId: string) => void
+  onRename: (file: FileWithPresignedThumbnailUrl) => void
   onDelete: (file: FileWithPresignedThumbnailUrl) => void
   movingFileId?: string | null
 }
@@ -23,6 +24,7 @@ export const FilesSection = ({
   hasMore,
   observerRef,
   onDownload,
+  onRename,
   onDelete,
   movingFileId = null,
 }: FilesSectionProps) => {
@@ -42,6 +44,7 @@ export const FilesSection = ({
             key={file.id}
             file={file}
             onDownload={onDownload}
+            onRename={onRename}
             onDelete={onDelete}
             isMoving={movingFileId === file.id}
           />

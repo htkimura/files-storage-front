@@ -2,7 +2,6 @@ import { queryDefaultOptions } from '@/config'
 import { useUser } from '@/contexts'
 import {
   type FileWithPresignedThumbnailUrl,
-  type Folder,
   useListMyFolders,
   useMyFiles,
 } from '@htkimura/files-storage-backend.rest-client'
@@ -30,21 +29,27 @@ export const useDriveData = (folderId: string | null) => {
       queryKey: ['/folders', foldersQueryParams],
     },
   })
-  const [allFolders, setAllFolders] = useState<Folder[]>([])
+
+  const queryFolders = Array.isArray(foldersRes?.data) ? foldersRes.data : []
+  const [hiddenFolderIds, setHiddenFolderIds] = useState<string[]>([])
   const [page, setPage] = useState(1)
   const [allFiles, setAllFiles] = useState<FileWithPresignedThumbnailUrl[]>([])
 
   useEffect(() => {
-    setAllFolders([])
+    setHiddenFolderIds([])
     setPage(1)
     setAllFiles([])
   }, [folderId])
 
-  useEffect(() => {
-    if (foldersRes?.data) {
-      setAllFolders(foldersRes.data)
-    }
-  }, [foldersRes?.data])
+  const folders = queryFolders.filter(
+    (folder) => !hiddenFolderIds.includes(folder.id),
+  )
+
+  const removeFolderFromView = (folderIdToHide: string) => {
+    setHiddenFolderIds((prev) =>
+      prev.includes(folderIdToHide) ? prev : [...prev, folderIdToHide],
+    )
+  }
 
   const {
     data: filesDataRaw,
@@ -101,8 +106,8 @@ export const useDriveData = (folderId: string | null) => {
 
   return {
     clientAxiosConfig,
-    folders: allFolders,
-    setAllFolders,
+    folders,
+    removeFolderFromView,
     foldersLoading,
     allFiles,
     setAllFiles,

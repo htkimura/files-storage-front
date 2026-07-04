@@ -6,6 +6,7 @@ import {
   useDeleteBulkFilesByIds,
   useGetFileById,
   useMoveFileToFolder,
+  useRenameFile,
   useUpdateParentFolder,
 } from '@htkimura/files-storage-backend.rest-client'
 import {
@@ -22,16 +23,17 @@ import { useCallback, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { DeleteFileDialog } from './components/DeleteFileDialog'
 import { DriveBreadcrumbItem } from './components/DriveBreadcrumbItem'
+import { DriveFileTileDragPreview } from './components/DriveFileTileDragPreview'
+import { DriveFolderTileDragPreview } from './components/DriveFolderTileDragPreview'
+import { FilesSection } from './components/FilesSection'
+import { FoldersSection } from './components/FoldersSection'
+import { RenameFileDialog } from './components/RenameFileDialog'
+import { useDriveData } from './hooks/useDriveData'
 import {
   parseDriveDropTargetFolderId,
   parseDriveFileDndId,
   parseDriveFolderDragDndId,
 } from './components/dnd'
-import { DriveFileTileDragPreview } from './components/DriveFileTileDragPreview'
-import { DriveFolderTileDragPreview } from './components/DriveFolderTileDragPreview'
-import { FilesSection } from './components/FilesSection'
-import { FoldersSection } from './components/FoldersSection'
-import { useDriveData } from './hooks/useDriveData'
 
 export interface DriveBreadcrumb {
   label: string
@@ -59,7 +61,7 @@ export const DrivePageContent = ({
   const {
     clientAxiosConfig,
     folders,
-    setAllFolders,
+    removeFolderFromView,
     allFiles,
     setAllFiles,
     foldersLoading,
@@ -136,6 +138,52 @@ export const DrivePageContent = ({
   const handleDeleteConfirm = () => {
     if (!fileToDelete) return
     deleteBulkFiles({ params: { ids: [fileToDelete.id] } })
+  }
+
+  const [fileToRename, setFileToRename] =
+    useState<FileWithPresignedThumbnailUrl | null>(null)
+  const [openRenameDialog, setOpenRenameDialog] = useState(false)
+
+  const { mutate: renameFile, isPending: isRenamingFile } = useRenameFile({
+    axios: clientAxiosConfig,
+  })
+
+  const handleRenameOpenChange = (open: boolean) => {
+    setOpenRenameDialog(open)
+    if (!open) setFileToRename(null)
+  }
+
+  const handleRenameRequest = (file: FileWithPresignedThumbnailUrl) => {
+    setFileToRename(file)
+    setOpenRenameDialog(true)
+  }
+
+  const handleRenameConfirm = (name: string) => {
+    if (!fileToRename) return
+
+    renameFile(
+      { id: fileToRename.id, data: { name } },
+      {
+        onSuccess: (response) => {
+          const updatedName = response.data.name
+          setAllFiles((prev) =>
+            prev.map((file) =>
+              file.id === fileToRename.id
+                ? { ...file, name: updatedName }
+                : file,
+            ),
+          )
+          setOpenRenameDialog(false)
+          toast.success('File renamed successfully')
+        },
+        onError: (error) => {
+          const message =
+            (error.response?.data as { message?: string } | undefined)
+              ?.message || 'Could not rename file'
+          toast.error(message)
+        },
+      },
+    )
   }
 
   const [activeDrag, setActiveDrag] = useState<ActiveDragItem | null>(null)
@@ -242,9 +290,7 @@ export const DrivePageContent = ({
         { id: draggedFolderId, data: { parentFolderId: targetFolderId } },
         {
           onSuccess: () => {
-            setAllFolders((prev) =>
-              prev.filter((item) => item.id !== draggedFolderId),
-            )
+            removeFolderFromView(draggedFolderId)
             toast.success(`Moved "${folder.name}" to "${destinationName}"`)
           },
           onError: (error) => {
@@ -259,7 +305,7 @@ export const DrivePageContent = ({
         },
       )
     },
-    [folders, getDestinationName, setAllFolders, updateParentFolder],
+    [folders, getDestinationName, removeFolderFromView, updateParentFolder],
   )
 
   const handleDragEnd = useCallback(
@@ -348,6 +394,7 @@ export const DrivePageContent = ({
             hasMore={hasMore}
             observerRef={observerRef}
             onDownload={handleDownload}
+            onRename={handleRenameRequest}
             onDelete={handleDeleteRequest}
             movingFileId={movingFileId}
           />
@@ -368,6 +415,14 @@ export const DrivePageContent = ({
         onOpenChange={setOpenDeleteDialog}
         onConfirm={handleDeleteConfirm}
         isLoading={isDeletingFile}
+      />
+
+      <RenameFileDialog
+        fileName={fileToRename?.name ?? null}
+        open={openRenameDialog}
+        onOpenChange={handleRenameOpenChange}
+        onConfirm={handleRenameConfirm}
+        isLoading={isRenamingFile}
       />
     </Layout>
   )

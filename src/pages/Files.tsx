@@ -7,12 +7,11 @@ import {
   useDeleteBulkFilesByIds,
   useGetFileById,
   useMyFiles,
+  useRenameFile,
 } from '@htkimura/files-storage-backend.rest-client'
 import type { AxiosRequestConfig } from 'axios'
 import {
   CloudUploadIcon,
-  DownloadIcon,
-  EllipsisVerticalIcon,
   Loader2,
   TrashIcon,
 } from 'lucide-react'
@@ -26,13 +25,6 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { filesize } from 'filesize'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { FC, useEffect, useRef, useState } from 'react'
 import {
   Dialog,
@@ -69,6 +61,8 @@ import {
 } from '@/components/upload/UploadProgressPopup'
 import { uploadFileToStorage } from '@/lib/chunked-upload'
 import toast from 'react-hot-toast'
+import { FileItemActions } from '@/components/FileItemActions'
+import { RenameFileDialog } from '@/pages/MyDrive/components/RenameFileDialog'
 
 const DragUploadAnimation = () => {
   const { View } = useLottie({
@@ -360,12 +354,14 @@ const FilesTable: FC<FilesTableProps> = ({
 }) => {
   const { setContent } = useOverlay()
   const [fileToDelete, setFileToDelete] = useState<File | null>(null) // saves the file to be deleted when clicked in a table line dropdown
+  const [fileToRename, setFileToRename] = useState<File | null>(null)
   const [rowSelection, setRowSelection] = useState({}) // state object for table control
   const selectedFiles = Object.keys(rowSelection).map(
     (key) => files[Number(key)].id,
   ) // array of selected files ids
 
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false)
+  const [openRenameDialog, setOpenRenameDialog] = useState(false)
 
   useEffect(() => {
     if (!openDeleteDialog) setFileToDelete(null)
@@ -390,6 +386,36 @@ const FilesTable: FC<FilesTableProps> = ({
       },
       axios: clientAxiosConfig,
     })
+
+  const { mutate: renameFile, isPending: isRenamingFile } = useRenameFile({
+    axios: clientAxiosConfig,
+  })
+
+  const handleRenameOpenChange = (open: boolean) => {
+    setOpenRenameDialog(open)
+    if (!open) setFileToRename(null)
+  }
+
+  const handleRenameConfirm = (name: string) => {
+    if (!fileToRename) return
+
+    renameFile(
+      { id: fileToRename.id, data: { name } },
+      {
+        onSuccess: () => {
+          refetch()
+          setOpenRenameDialog(false)
+          toast.success('File renamed successfully')
+        },
+        onError: (error) => {
+          const message =
+            (error.response?.data as { message?: string } | undefined)
+              ?.message || 'Could not rename file'
+          toast.error(message)
+        },
+      },
+    )
+  }
 
   const rowSelectionKeys = Object.keys(rowSelection)
 
@@ -440,38 +466,19 @@ const FilesTable: FC<FilesTableProps> = ({
     {
       id: 'actions',
       cell: ({ row }) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
-              <EllipsisVerticalIcon className="h-4 w-4" />
-              <span className="sr-only">Open menu</span>
-            </Button>
-          </DropdownMenuTrigger>
-
-          <DropdownMenuContent className="w-56" align="start">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              className="cursor-pointer"
-              onClick={() => handleDownload(row.original.id)}
-            >
-              <DownloadIcon />
-              Download
-            </DropdownMenuItem>
-
-            <button
-              className="w-full"
-              onClick={() => {
-                setFileToDelete(row.original)
-                setOpenDeleteDialog(true)
-              }}
-            >
-              <DropdownMenuItem className="cursor-pointer text-red-500">
-                <TrashIcon className="text-red-500" />
-                Delete
-              </DropdownMenuItem>
-            </button>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <FileItemActions
+          name={row.original.name}
+          menuAlign="start"
+          onDownload={() => handleDownload(row.original.id)}
+          onRename={() => {
+            setFileToRename(row.original)
+            setOpenRenameDialog(true)
+          }}
+          onDelete={() => {
+            setFileToDelete(row.original)
+            setOpenDeleteDialog(true)
+          }}
+        />
       ),
     },
   ]
@@ -678,6 +685,14 @@ const FilesTable: FC<FilesTableProps> = ({
           />
         </Dialog>
       )}
+
+      <RenameFileDialog
+        fileName={fileToRename?.name ?? null}
+        open={openRenameDialog}
+        onOpenChange={handleRenameOpenChange}
+        onConfirm={handleRenameConfirm}
+        isLoading={isRenamingFile}
+      />
     </>
   )
 }

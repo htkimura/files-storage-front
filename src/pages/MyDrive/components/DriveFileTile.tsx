@@ -4,11 +4,12 @@ import type { FileWithPresignedThumbnailUrl } from '@htkimura/files-storage-back
 import { FileIcon } from 'lucide-react'
 import { useState } from 'react'
 import { driveFileDndId } from './dnd'
-import { DriveItemActions } from './DriveItemActions'
+import { FileItemActions } from '@/components/FileItemActions'
 
 interface DriveFileTileProps {
   file: FileWithPresignedThumbnailUrl
   onDownload: (fileId: string) => void
+  onRename: (file: FileWithPresignedThumbnailUrl) => void
   onDelete: (file: FileWithPresignedThumbnailUrl) => void
   isMoving?: boolean
 }
@@ -16,6 +17,7 @@ interface DriveFileTileProps {
 export const DriveFileTile = ({
   file,
   onDownload,
+  onRename,
   onDelete,
   isMoving = false,
 }: DriveFileTileProps) => {
@@ -55,9 +57,11 @@ export const DriveFileTile = ({
         <p className="min-w-0 flex-1 truncate text-xs font-medium text-foreground">
           {file.name}
         </p>
-        <DriveItemActions
+        <FileItemActions
           name={file.name}
+          stopPropagation
           onDownload={() => onDownload(file.id)}
+          onRename={() => onRename(file)}
           onDelete={() => onDelete(file)}
           className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100"
         />
