@@ -1,6 +1,10 @@
 import DocViewer, { DocViewerRenderers } from '@cyntler/react-doc-viewer'
 import '@cyntler/react-doc-viewer/dist/index.css'
-import { isImagePreviewFile, toPreviewDocument } from '@/lib/filePreview'
+import {
+  isImagePreviewFile,
+  isPdfPreviewFile,
+  toPreviewDocument,
+} from '@/lib/filePreview'
 import type { FileWithPresignedUrl } from '@htkimura/files-storage-backend.rest-client'
 import { Loader2Icon, XIcon } from 'lucide-react'
 import { type FC, type ReactNode, useEffect, useMemo } from 'react'
@@ -34,6 +38,10 @@ export const FilePreviewer: FC<FilePreviewerProps> = ({
   )
 
   const showImage = file ? isImagePreviewFile(file) : false
+  const showPdf = file ? isPdfPreviewFile(file) : false
+
+  const documentPanelClassName =
+    'h-[min(75vh,calc(100vh-10rem))] w-full max-w-5xl overflow-hidden rounded-lg bg-background shadow-2xl'
 
   const layer = (
     <div className="fixed inset-0 z-[500] flex flex-col bg-gray-950/80">
@@ -64,10 +72,18 @@ export const FilePreviewer: FC<FilePreviewerProps> = ({
             onClick={(e) => e.stopPropagation()}
             className="max-h-[calc(100vh-10rem)] max-w-[min(95vw,72rem)] w-auto h-auto object-contain shadow-2xl"
           />
+        ) : showPdf ? (
+          <iframe
+            key={file.id}
+            src={file.presignedUrl}
+            title={file.name}
+            onClick={(e) => e.stopPropagation()}
+            className={documentPanelClassName}
+          />
         ) : previewDocument ? (
           <div
             key={file.id}
-            className="h-[min(75vh,calc(100vh-10rem))] w-full max-w-5xl overflow-hidden rounded-lg bg-background shadow-2xl"
+            className={documentPanelClassName}
             onClick={(e) => e.stopPropagation()}
           >
             <DocViewer

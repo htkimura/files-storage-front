@@ -67,6 +67,15 @@ export const isImagePreviewFile = (file: {
   return extension ? IMAGE_EXTENSIONS.has(extension) : false
 }
 
+export const isPdfPreviewFile = (file: {
+  name: string
+  type: string
+}): boolean => {
+  if (file.type.toLowerCase() === 'application/pdf') return true
+
+  return file.name.split('.').pop()?.toLowerCase() === 'pdf'
+}
+
 export type FetchedPreviewFiles = Record<string, FileWithPresignedUrl>
 
 export const upsertPreviewFiles = (
