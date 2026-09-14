@@ -49,6 +49,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { FileUploadDropzone } from '@/components/upload/FileUploadDropzone'
+import { MobileUploadFab } from '@/components/upload/MobileUploadFab'
 import { UploadProgressPopup } from '@/components/upload/UploadProgressPopup'
 import toast from 'react-hot-toast'
 import { FileItemActions } from '@/components/FileItemActions'
@@ -88,6 +89,7 @@ export const Files = () => {
     handleCancelAllUploads,
     handleDismissUploadPanel,
     handleRemoveUploadItem,
+    openFilePicker,
   } = useFileUpload({
     token,
     onUploadComplete: refetch,
@@ -160,7 +162,10 @@ export const Files = () => {
           getRootProps={getRootProps}
           getInputProps={getInputProps}
           isDragActive={isDragActive}
+          className="hidden md:flex"
         />
+
+        <MobileUploadFab onUpload={openFilePicker} disabled={!token} />
 
         <UploadProgressPopup
           items={uploadItems}

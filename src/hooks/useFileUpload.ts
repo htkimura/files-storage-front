@@ -132,7 +132,7 @@ export const useFileUpload = ({
     [folderId, onUploadComplete, token],
   )
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     noKeyboard: true,
     noClick,
     disabled: !token,
@@ -148,6 +148,7 @@ export const useFileUpload = ({
     getRootProps,
     getInputProps,
     isDragActive,
+    openFilePicker: open,
     handleCancelAllUploads,
     handleDismissUploadPanel,
     handleRemoveUploadItem,

@@ -5,6 +5,7 @@ import {
   FilePreviewStrip,
   PreviewStripItem,
 } from '@/components/preview/FilePreviewStrip'
+import { MobileUploadFab } from '@/components/upload/MobileUploadFab'
 import { UploadProgressPopup } from '@/components/upload/UploadProgressPopup'
 import { useOverlay, useUser } from '@/contexts'
 import { useFilePreview } from '@/hooks/useFilePreview'
@@ -96,6 +97,7 @@ export const MemoryVaultPageContent = ({
     handleCancelAllUploads,
     handleDismissUploadPanel,
     handleRemoveUploadItem,
+    openFilePicker,
   } = useFileUpload({
     token,
     folderId,
@@ -525,6 +527,8 @@ export const MemoryVaultPageContent = ({
           ) : null}
         </DragOverlay>
       </DndContext>
+
+      <MobileUploadFab onUpload={openFilePicker} disabled={!token} />
 
       <DeleteFileDialog
         fileName={fileToDelete?.name ?? null}
