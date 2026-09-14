@@ -1,4 +1,5 @@
 import { FileTypeIcon } from '@/components/FileTypeIcon'
+import { useHeicAwareImageSrc } from '@/hooks/useHeicAwareImageSrc'
 import { cn } from '@/lib/utils'
 import type { FileWithPresignedThumbnailUrl } from '@htkimura/files-storage-backend.rest-client'
 
@@ -10,6 +11,8 @@ export const VaultFileTileDragPreview = ({
   file,
 }: VaultFileTileDragPreviewProps) => {
   const url = file.presignedThumbnailUrl
+  const { src, isPending, failed } = useHeicAwareImageSrc(url, file)
+  const showImage = Boolean(url) && !failed && !isPending && Boolean(src)
 
   return (
     <div
@@ -19,8 +22,8 @@ export const VaultFileTileDragPreview = ({
       )}
     >
       <div className="flex aspect-square w-full items-center justify-center overflow-hidden rounded-lg bg-muted/60">
-        {url ? (
-          <img src={url} alt="" className="h-full w-full object-cover" />
+        {showImage && src ? (
+          <img src={src} alt="" className="h-full w-full object-cover" />
         ) : (
           <FileTypeIcon file={file} className="size-12" />
         )}

@@ -1,5 +1,6 @@
 import DocViewer, { DocViewerRenderers } from '@cyntler/react-doc-viewer'
 import '@cyntler/react-doc-viewer/dist/index.css'
+import { useHeicAwareImageSrc } from '@/hooks/useHeicAwareImageSrc'
 import {
   isImagePreviewFile,
   isPdfPreviewFile,
@@ -39,6 +40,13 @@ export const FilePreviewer: FC<FilePreviewerProps> = ({
 
   const showImage = file ? isImagePreviewFile(file) : false
   const showPdf = file ? isPdfPreviewFile(file) : false
+  const imageRemoteUrl = showImage && file ? file.presignedUrl : undefined
+  const imageFile = file ?? { name: '', type: '' }
+  const {
+    src: imageSrc,
+    isPending: isImagePending,
+    failed: imageDisplayFailed,
+  } = useHeicAwareImageSrc(imageRemoteUrl, imageFile)
 
   const documentPanelClassName =
     'h-[min(75vh,calc(100vh-10rem))] w-full max-w-5xl overflow-hidden rounded-lg bg-background shadow-2xl'
@@ -64,10 +72,32 @@ export const FilePreviewer: FC<FilePreviewerProps> = ({
             <Loader2Icon className="size-10 animate-spin" aria-hidden />
             <span className="sr-only">Loading preview</span>
           </div>
-        ) : showImage ? (
+        ) : showImage && imageDisplayFailed ? (
+          <div
+            key={file.id}
+            className="flex max-w-lg flex-col items-center gap-4 rounded-lg bg-background p-8 text-center shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="text-sm text-muted-foreground">
+              This image could not be displayed in the browser.
+            </p>
+            <a
+              href={file.presignedUrl}
+              download={file.name}
+              className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+            >
+              Download {file.name}
+            </a>
+          </div>
+        ) : showImage && (isImagePending || !imageSrc) ? (
+          <div className="flex items-center justify-center text-white/80">
+            <Loader2Icon className="size-10 animate-spin" aria-hidden />
+            <span className="sr-only">Loading image</span>
+          </div>
+        ) : showImage && imageSrc ? (
           <img
             key={file.id}
-            src={file.presignedUrl}
+            src={imageSrc}
             alt={file.name}
             onClick={(e) => e.stopPropagation()}
             className="max-h-[calc(100vh-10rem)] max-w-[min(95vw,72rem)] w-auto h-auto object-contain shadow-2xl"

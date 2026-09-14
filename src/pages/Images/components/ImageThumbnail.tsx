@@ -1,4 +1,5 @@
 import { Skeleton } from '@/components/ui/skeleton'
+import { useHeicAwareImageSrc } from '@/hooks/useHeicAwareImageSrc'
 import type { FileWithPresignedThumbnailUrl } from '@htkimura/files-storage-backend.rest-client'
 import classNames from 'classnames'
 import { type FC, useState } from 'react'
@@ -22,6 +23,12 @@ const ImageThumbnail: FC<Props> = ({
 }) => {
   const [loaded, setLoaded] = useState(false)
   const [thumbFailed, setThumbFailed] = useState(false)
+  const { src, isPending, failed } = useHeicAwareImageSrc(
+    file.presignedThumbnailUrl,
+    file,
+  )
+  const canShowThumbnail =
+    Boolean(file.presignedThumbnailUrl) && !thumbFailed && !failed
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation()
@@ -43,9 +50,9 @@ const ImageThumbnail: FC<Props> = ({
         },
       )}
     >
-      {file.presignedThumbnailUrl && !thumbFailed ? (
+      {canShowThumbnail ? (
         <>
-          {!loaded && (
+          {(!loaded || isPending) && (
             <Skeleton
               className={classNames('rounded-md', {
                 'h-full w-full': variant === 'strip',
@@ -57,18 +64,20 @@ const ImageThumbnail: FC<Props> = ({
               }
             />
           )}
-          <img
-            src={file.presignedThumbnailUrl}
-            alt={file.name}
-            onLoad={() => setLoaded(true)}
-            onError={() => setThumbFailed(true)}
-            width={variant === 'grid' ? maxWidth : undefined}
-            height={variant === 'grid' ? maxHeight : undefined}
-            className={classNames('object-cover object-center', {
-              hidden: !loaded,
-              'h-full w-full': variant === 'strip',
-            })}
-          />
+          {src ? (
+            <img
+              src={src}
+              alt={file.name}
+              onLoad={() => setLoaded(true)}
+              onError={() => setThumbFailed(true)}
+              width={variant === 'grid' ? maxWidth : undefined}
+              height={variant === 'grid' ? maxHeight : undefined}
+              className={classNames('object-cover object-center', {
+                hidden: !loaded || isPending,
+                'h-full w-full': variant === 'strip',
+              })}
+            />
+          ) : null}
         </>
       ) : (
         <div

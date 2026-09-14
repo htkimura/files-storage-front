@@ -57,6 +57,17 @@ const IMAGE_EXTENSIONS = new Set([
   'heif',
 ])
 
+export const isHeicFile = (file: {
+  name: string
+  type: string
+}): boolean => {
+  const mime = file.type.toLowerCase()
+  if (mime === 'image/heic' || mime === 'image/heif') return true
+
+  const extension = file.name.split('.').pop()?.toLowerCase()
+  return extension === 'heic' || extension === 'heif'
+}
+
 export const isImagePreviewFile = (file: {
   name: string
   type: string

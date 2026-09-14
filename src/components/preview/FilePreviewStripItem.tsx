@@ -1,5 +1,6 @@
 import { FileTypeIcon } from '@/components/FileTypeIcon'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useHeicAwareImageSrc } from '@/hooks/useHeicAwareImageSrc'
 import type { FileWithPresignedThumbnailUrl } from '@htkimura/files-storage-backend.rest-client'
 import classNames from 'classnames'
 import { type FC, useState } from 'react'
@@ -17,13 +18,18 @@ export const FilePreviewStripItem: FC<FilePreviewStripItemProps> = ({
 }) => {
   const [loaded, setLoaded] = useState(false)
   const [thumbFailed, setThumbFailed] = useState(false)
+  const { src, isPending, failed } = useHeicAwareImageSrc(
+    file.presignedThumbnailUrl,
+    file,
+  )
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation()
     onSelect(file.id)
   }
 
-  const showThumbnail = Boolean(file.presignedThumbnailUrl) && !thumbFailed
+  const showThumbnail =
+    Boolean(file.presignedThumbnailUrl) && !thumbFailed && !failed
 
   return (
     <button
@@ -37,16 +43,20 @@ export const FilePreviewStripItem: FC<FilePreviewStripItemProps> = ({
     >
       {showThumbnail ? (
         <>
-          {!loaded && <Skeleton className="h-full w-full rounded-lg" />}
-          <img
-            src={file.presignedThumbnailUrl}
-            alt={file.name}
-            onLoad={() => setLoaded(true)}
-            onError={() => setThumbFailed(true)}
-            className={classNames('h-full w-full object-cover object-center', {
-              hidden: !loaded,
-            })}
-          />
+          {(!loaded || isPending) && (
+            <Skeleton className="h-full w-full rounded-lg" />
+          )}
+          {src ? (
+            <img
+              src={src}
+              alt={file.name}
+              onLoad={() => setLoaded(true)}
+              onError={() => setThumbFailed(true)}
+              className={classNames('h-full w-full object-cover object-center', {
+                hidden: !loaded || isPending,
+              })}
+            />
+          ) : null}
         </>
       ) : (
         <div className="flex h-full w-full flex-col items-center justify-center gap-1 px-2 text-white/80">
