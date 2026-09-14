@@ -32,6 +32,7 @@
     "clsx": "^2.1.1",
     "dotenv": "^16.4.7",
     "filesize": "^10.1.6",
+    "heic2any": "^0.0.4",
     "lottie-react": "^2.4.1",
     "lucide-react": "^0.503.0",
     "pluralize-esm": "^9.0.5",
