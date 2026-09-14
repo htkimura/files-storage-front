@@ -1,3 +1,4 @@
+import { AuthSessionHandler } from '@/contexts/auth-session-handler'
 import { useStoredState } from '@/hooks/use-stored-state'
 import { User } from '@htkimura/files-storage-backend.rest-client'
 import React, {
@@ -28,6 +29,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   )
 
   const logout = () => {
+    setUser(null)
     setToken(null)
     setRefreshToken(null)
   }
@@ -44,6 +46,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         logout,
       }}
     >
+      <AuthSessionHandler logout={logout} />
       {children}
     </UserContext.Provider>
   )
