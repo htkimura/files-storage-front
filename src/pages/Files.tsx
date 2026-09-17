@@ -48,9 +48,16 @@ import {
 import { Checkbox } from '@/components/ui/checkbox'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
+import { FileSortControl } from '@/components/files/FileSortControl'
 import { FileUploadDropzone } from '@/components/upload/FileUploadDropzone'
 import { MobileUploadFab } from '@/components/upload/MobileUploadFab'
 import { UploadProgressPopup } from '@/components/upload/UploadProgressPopup'
+import { useStoredState } from '@/hooks/use-stored-state'
+import {
+  DEFAULT_FILE_LIST_SORT,
+  FILE_LIST_SORT_STORAGE_KEY,
+  type FileListSort,
+} from '@/lib/file-list-sort'
 import toast from 'react-hot-toast'
 import { FileItemActions } from '@/components/FileItemActions'
 import { RenameFileDialog } from '@/pages/MemoryVault/components/RenameFileDialog'
@@ -67,17 +74,30 @@ export const Files = () => {
 
   const [page, setPage] = useState(1)
   const size = 20
+  const [listSort, setListSort] = useStoredState<FileListSort>(
+    FILE_LIST_SORT_STORAGE_KEY,
+    DEFAULT_FILE_LIST_SORT,
+  )
 
   const {
     data: filesDataRaw,
     refetch,
     isLoading: isLoadingFiles,
   } = useMyFiles(
-    { page, size },
+    {
+      page,
+      size,
+      sortBy: listSort.sortBy,
+      sortOrder: listSort.sortOrder,
+    },
     {
       axios: clientAxiosConfig,
     },
   )
+
+  useEffect(() => {
+    setPage(1)
+  }, [listSort.sortBy, listSort.sortOrder])
 
   const {
     uploadItems,
@@ -149,13 +169,20 @@ export const Files = () => {
   return (
     <Layout className="p-0">
       <div className="flex flex-col gap-8 p-6 md:p-8 md:pb-10">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
-            All files
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Upload, download, and organize your documents
-          </p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
+              All files
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Upload, download, and organize your documents
+            </p>
+          </div>
+          <FileSortControl
+            value={listSort}
+            onChange={setListSort}
+            className="shrink-0 self-start sm:mt-1"
+          />
         </div>
 
         <FileUploadDropzone

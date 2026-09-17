@@ -1,15 +1,19 @@
 import { queryDefaultOptions } from '@/config'
 import { useUser } from '@/contexts'
+import type { FileListSort } from '@/lib/file-list-sort'
 import {
   type FileWithPresignedThumbnailUrl,
-  useListMyFolders,
-  useMyFiles,
+  type Folder,
+  useListChildren,
 } from '@htkimura/files-storage-backend.rest-client'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 const PAGE_SIZE = 20
 
-export const useMemoryVaultData = (folderId: string | null) => {
+export const useMemoryVaultData = (
+  folderId: string | null,
+  sort: FileListSort,
+) => {
   const { token } = useUser()
   const clientAxiosConfig = {
     ...queryDefaultOptions.axios,
@@ -18,30 +22,30 @@ export const useMemoryVaultData = (folderId: string | null) => {
     },
   }
 
-  const foldersQueryParams = { parentFolderId: folderId ?? null }
-
-  const { data: foldersRes, isLoading: foldersLoading } = useListMyFolders(
-    foldersQueryParams,
-    {
-      axios: clientAxiosConfig,
-      query: {
-        queryKey: ['/folders', foldersQueryParams],
-      },
-    },
-  )
-
-  const queryFolders = Array.isArray(foldersRes?.data) ? foldersRes!.data : []
   const [hiddenFolderIds, setHiddenFolderIds] = useState<string[]>([])
   const [page, setPage] = useState(1)
+
+  const listParams = useMemo(
+    () => ({
+      page,
+      size: PAGE_SIZE,
+      sortBy: sort.sortBy,
+      sortOrder: sort.sortOrder,
+      ...(folderId ? { parentFolderId: folderId } : {}),
+    }),
+    [folderId, page, sort.sortBy, sort.sortOrder],
+  )
+  const [allFolders, setAllFolders] = useState<Folder[]>([])
   const [allFiles, setAllFiles] = useState<FileWithPresignedThumbnailUrl[]>([])
 
   useEffect(() => {
     setHiddenFolderIds([])
     setPage(1)
+    setAllFolders([])
     setAllFiles([])
-  }, [folderId])
+  }, [folderId, sort.sortBy, sort.sortOrder])
 
-  const folders = queryFolders.filter(
+  const folders = allFolders.filter(
     (folder) => !hiddenFolderIds.includes(folder.id),
   )
 
@@ -52,41 +56,55 @@ export const useMemoryVaultData = (folderId: string | null) => {
   }
 
   const {
-    data: filesDataRaw,
-    isLoading: filesInitialLoading,
-    isFetching: filesFetching,
-    refetch: refetchFiles,
-  } = useMyFiles(
-    { page, size: PAGE_SIZE, folderId },
-    {
-      axios: clientAxiosConfig,
+    data: childrenDataRaw,
+    isLoading: childrenInitialLoading,
+    isFetching: childrenFetching,
+    refetch: refetchChildren,
+  } = useListChildren(listParams, {
+    axios: clientAxiosConfig,
+    query: {
+      queryKey: ['/children', listParams],
     },
-  )
+  })
 
-  const filesPayload = filesDataRaw?.data
-  const hasMore = filesPayload?.hasMore ?? false
+  const childrenPayload = childrenDataRaw?.data
+  const hasMore = childrenPayload?.hasMore ?? false
 
   useEffect(() => {
-    if (!filesPayload?.data) return
-    const incoming = filesPayload.data
+    if (!childrenPayload?.data) return
+
+    const incomingFolders = childrenPayload.data.folders
+    const incomingFiles = childrenPayload.data.files
+
     if (page === 1) {
-      setAllFiles(incoming)
+      setAllFolders(incomingFolders)
+      setAllFiles(incomingFiles)
       return
     }
-    setAllFiles((prev) => {
-      const ids = new Set(prev.map((f) => f.id))
+
+    setAllFolders((prev) => {
+      const ids = new Set(prev.map((folder) => folder.id))
       const next = [...prev]
-      for (const f of incoming) {
-        if (!ids.has(f.id)) next.push(f)
+      for (const folder of incomingFolders) {
+        if (!ids.has(folder.id)) next.push(folder)
       }
       return next
     })
-  }, [filesPayload, page])
+
+    setAllFiles((prev) => {
+      const ids = new Set(prev.map((file) => file.id))
+      const next = [...prev]
+      for (const file of incomingFiles) {
+        if (!ids.has(file.id)) next.push(file)
+      }
+      return next
+    })
+  }, [childrenPayload, page])
 
   const observerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (!hasMore || filesFetching) return
+    if (!hasMore || childrenFetching) return
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -103,17 +121,20 @@ export const useMemoryVaultData = (folderId: string | null) => {
     return () => {
       if (el) observer.unobserve(el)
     }
-  }, [hasMore, filesFetching])
+  }, [hasMore, childrenFetching])
 
   const loadMoreFiles = useCallback(() => {
-    if (!hasMore || filesFetching) return
+    if (!hasMore || childrenFetching) return
     setPage((current) => current + 1)
-  }, [hasMore, filesFetching])
+  }, [hasMore, childrenFetching])
 
   const refreshFiles = useCallback(async () => {
     setPage(1)
-    await refetchFiles()
-  }, [refetchFiles])
+    await refetchChildren()
+  }, [refetchChildren])
+
+  const foldersLoading = childrenInitialLoading && page === 1
+  const filesInitialLoading = childrenInitialLoading && allFiles.length === 0
 
   return {
     clientAxiosConfig,
@@ -123,7 +144,7 @@ export const useMemoryVaultData = (folderId: string | null) => {
     allFiles,
     setAllFiles,
     filesInitialLoading,
-    filesFetching,
+    filesFetching: childrenFetching,
     hasMore,
     observerRef,
     loadMoreFiles,

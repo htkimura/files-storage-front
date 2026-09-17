@@ -5,11 +5,18 @@ import {
   FilePreviewStrip,
   PreviewStripItem,
 } from '@/components/preview/FilePreviewStrip'
+import { FileSortControl } from '@/components/files/FileSortControl'
 import { MobileUploadFab } from '@/components/upload/MobileUploadFab'
 import { UploadProgressPopup } from '@/components/upload/UploadProgressPopup'
 import { useOverlay, useUser } from '@/contexts'
 import { useFilePreview } from '@/hooks/useFilePreview'
 import { useFileUpload } from '@/hooks/useFileUpload'
+import { useStoredState } from '@/hooks/use-stored-state'
+import {
+  DEFAULT_FILE_LIST_SORT,
+  FILE_LIST_SORT_STORAGE_KEY,
+  type FileListSort,
+} from '@/lib/file-list-sort'
 import { cn } from '@/lib/utils'
 import {
   type FileWithPresignedThumbnailUrl,
@@ -72,6 +79,10 @@ export const MemoryVaultPageContent = ({
 }: MemoryVaultPageContentProps) => {
   const { token } = useUser()
   const { setContent } = useOverlay()
+  const [listSort, setListSort] = useStoredState<FileListSort>(
+    FILE_LIST_SORT_STORAGE_KEY,
+    DEFAULT_FILE_LIST_SORT,
+  )
   const {
     clientAxiosConfig,
     folders,
@@ -85,7 +96,7 @@ export const MemoryVaultPageContent = ({
     loadMoreFiles,
     observerRef,
     refreshFiles,
-  } = useMemoryVaultData(folderId)
+  } = useMemoryVaultData(folderId, listSort)
 
   const {
     uploadItems,
@@ -483,10 +494,21 @@ export const MemoryVaultPageContent = ({
                 ))}
               </nav>
             )}
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
-              {title}
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0">
+                <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
+                  {title}
+                </h1>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {description}
+                </p>
+              </div>
+              <FileSortControl
+                value={listSort}
+                onChange={setListSort}
+                className="shrink-0 self-start sm:mt-1"
+              />
+            </div>
           </div>
 
           <UploadProgressPopup
