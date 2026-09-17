@@ -1,6 +1,7 @@
 import { config, queryDefaultOptions } from '@/config'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { uploadFileToStorage } from '@/lib/chunked-upload'
+import { UPLOAD_CONCURRENCY_LIMIT } from '@/lib/upload-concurrency'
 import { moveFileToFolder } from '@htkimura/files-storage-backend.rest-client'
 import { useCallback, useRef, useState } from 'react'
 import { useDropzone } from 'react-dropzone'
@@ -15,6 +16,11 @@ interface UseFileUploadOptions {
   noClick?: boolean
 }
 
+interface PendingUpload {
+  id: string
+  file: File
+}
+
 export const useFileUpload = ({
   token,
   folderId = null,
@@ -24,8 +30,106 @@ export const useFileUpload = ({
   const [uploadItems, setUploadItems] = useState<UploadRowState[]>([])
   const [uploadCollapsed, setUploadCollapsed] = useState(false)
   const controllersRef = useRef(new Map<string, AbortController>())
+  const pendingRef = useRef<PendingUpload[]>([])
+  const activeCountRef = useRef(0)
+  const tokenRef = useRef(token)
+  const folderIdRef = useRef(folderId)
+  const onUploadCompleteRef = useRef(onUploadComplete)
+
+  tokenRef.current = token
+  folderIdRef.current = folderId
+  onUploadCompleteRef.current = onUploadComplete
+
+  const updateRow = useCallback(
+    (id: string, patch: Partial<UploadRowState>) => {
+      setUploadItems((prev) =>
+        prev.map((item) => (item.id === id ? { ...item, ...patch } : item)),
+      )
+    },
+    [],
+  )
+
+  const runUpload = useCallback(
+    async (pending: PendingUpload) => {
+      const currentToken = tokenRef.current
+      if (!currentToken) {
+        return
+      }
+
+      const authHeaders = { Authorization: `Bearer ${currentToken}` }
+      const axiosConfig = {
+        ...queryDefaultOptions.axios,
+        headers: authHeaders,
+      }
+
+      const ac = new AbortController()
+      controllersRef.current.set(pending.id, ac)
+
+      updateRow(pending.id, { status: 'uploading', progress: 0 })
+
+      try {
+        const fileId = await uploadFileToStorage(
+          pending.file,
+          config.apiBaseUrl,
+          authHeaders,
+          {
+            signal: ac.signal,
+            onProgress: (progress) =>
+              updateRow(pending.id, { progress }),
+          },
+        )
+
+        const targetFolderId = folderIdRef.current
+        if (targetFolderId) {
+          await moveFileToFolder(fileId, { folderId: targetFolderId }, axiosConfig)
+        }
+
+        updateRow(pending.id, { status: 'complete', progress: 100 })
+        await onUploadCompleteRef.current?.()
+        toast.success(`Uploaded ${pending.file.name}`)
+      } catch (error) {
+        if (ac.signal.aborted) {
+          updateRow(pending.id, { status: 'cancelled' })
+        } else {
+          console.error('[upload]', error)
+          const message = getApiErrorMessage(error, 'Upload failed')
+          updateRow(pending.id, { status: 'error', errorMessage: message })
+          toast.error(message)
+        }
+      } finally {
+        controllersRef.current.delete(pending.id)
+      }
+    },
+    [updateRow],
+  )
+
+  const pumpQueueRef = useRef<() => void>(() => {})
+
+  pumpQueueRef.current = () => {
+    while (
+      activeCountRef.current < UPLOAD_CONCURRENCY_LIMIT &&
+      pendingRef.current.length > 0
+    ) {
+      const next = pendingRef.current.shift()
+      if (!next) {
+        return
+      }
+
+      activeCountRef.current += 1
+
+      void runUpload(next).finally(() => {
+        activeCountRef.current -= 1
+        pumpQueueRef.current()
+      })
+    }
+  }
+
+  const pumpQueue = useCallback(() => {
+    pumpQueueRef.current()
+  }, [])
 
   const handleCancelAllUploads = useCallback(() => {
+    pendingRef.current = []
     controllersRef.current.forEach((ac) => ac.abort())
     controllersRef.current.clear()
     setUploadItems((prev) =>
@@ -38,8 +142,10 @@ export const useFileUpload = ({
   }, [])
 
   const handleDismissUploadPanel = useCallback(() => {
+    pendingRef.current = []
     controllersRef.current.forEach((ac) => ac.abort())
     controllersRef.current.clear()
+    activeCountRef.current = 0
     setUploadItems([])
   }, [])
 
@@ -49,12 +155,8 @@ export const useFileUpload = ({
 
   const uploadFiles = useCallback(
     (files: File[]) => {
-      if (!token || files.length === 0) return
-
-      const authHeaders = { Authorization: `Bearer ${token}` }
-      const axiosConfig = {
-        ...queryDefaultOptions.axios,
-        headers: authHeaders,
+      if (!token || files.length === 0) {
+        return
       }
 
       const pairs = files.map((file) => ({
@@ -64,72 +166,20 @@ export const useFileUpload = ({
           name: file.name,
           size: file.size,
           progress: 0,
-          status: 'uploading' as const,
+          status: 'queued' as const,
         },
       }))
 
       setUploadCollapsed(false)
       setUploadItems((prev) => [...prev, ...pairs.map((pair) => pair.row)])
 
-      for (const { file, row } of pairs) {
-        const ac = new AbortController()
-        controllersRef.current.set(row.id, ac)
-        void (async () => {
-          try {
-            const fileId = await uploadFileToStorage(
-              file,
-              config.apiBaseUrl,
-              authHeaders,
-              {
-                signal: ac.signal,
-                onProgress: (progress) =>
-                  setUploadItems((prev) =>
-                    prev.map((item) =>
-                      item.id === row.id ? { ...item, progress } : item,
-                    ),
-                  ),
-              },
-            )
-
-            if (folderId) {
-              await moveFileToFolder(fileId, { folderId }, axiosConfig)
-            }
-
-            setUploadItems((prev) =>
-              prev.map((item) =>
-                item.id === row.id
-                  ? { ...item, status: 'complete', progress: 100 }
-                  : item,
-              ),
-            )
-            await onUploadComplete?.()
-            toast.success(`Uploaded ${row.name}`)
-          } catch (error) {
-            if (ac.signal.aborted) {
-              setUploadItems((prev) =>
-                prev.map((item) =>
-                  item.id === row.id ? { ...item, status: 'cancelled' } : item,
-                ),
-              )
-            } else {
-              console.error('[upload]', error)
-              const message = getApiErrorMessage(error, 'Upload failed')
-              setUploadItems((prev) =>
-                prev.map((item) =>
-                  item.id === row.id
-                    ? { ...item, status: 'error', errorMessage: message }
-                    : item,
-                ),
-              )
-              toast.error(message)
-            }
-          } finally {
-            controllersRef.current.delete(row.id)
-          }
-        })()
+      for (const pair of pairs) {
+        pendingRef.current.push({ id: pair.row.id, file: pair.file })
       }
+
+      pumpQueue()
     },
-    [folderId, onUploadComplete, token],
+    [pumpQueue, token],
   )
 
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
